@@ -736,29 +736,31 @@
 
   .game-board {
     margin: 3px 0;
-    padding: 3px;
-    gap: 2px;
+    padding: 3px 0;
+    gap: 4px;
     width: 100%;
+    justify-content: space-between;
   }
 
   .card-pile {
-    width: calc(12.5% - 2px);
-    min-width: 70px;
-    max-width: 120px;
+    width: calc(12.5% - 4px);
+    min-width: 80px;
+    max-width: none;
     min-height: 180px;
     padding-bottom: 20px;
     flex: 1;
   }
 
   .card {
-    width: 65px;
+    width: 90%;
+    max-width: 100px;
     height: 85px;
-    font-size: 20px;
+    font-size: 22px;
   }
 
   .card.visible::before,
   .card.visible::after {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .level-selection {
