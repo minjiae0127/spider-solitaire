@@ -348,6 +348,8 @@ function App() {
   // 힌트 기능을 위한 상태 추가
   const [hintInfo, setHintInfo] = useState(null);
   const [showingHint, setShowingHint] = useState(false);
+  // 이동 횟수 카운터 (실행취소해도 줄어들지 않음)
+  const [moveCount, setMoveCount] = useState(0);
 
   // 게임 상태를 히스토리에 저장하는 함수
   const saveGameState = () => {
@@ -573,6 +575,7 @@ function App() {
 
       setGameBoard(newGameBoard);
       setScore(prevScore => Math.max(0, prevScore - 1));
+      setMoveCount(prev => prev + 1); // 이동 횟수 증가
 
       // 완성된 세트 확인 및 제거
       checkAndRemoveCompletedSets(newGameBoard);
@@ -695,6 +698,7 @@ function App() {
     setGameBoard(newGameBoard);
     setDealPile(newDealPile);
     setScore(prevScore => Math.max(0, prevScore - 5));
+    setMoveCount(prev => prev + 1); // 이동 횟수 증가
 
     // 완성된 세트 확인
     checkAndRemoveCompletedSets(newGameBoard);
@@ -710,6 +714,7 @@ function App() {
     setCompletedSets(0);
     setGameWon(false);
     setDragInfo(null);
+    setMoveCount(0); // 이동 횟수 초기화
     clearHistory(); // 히스토리 초기화
   };
 
@@ -727,6 +732,7 @@ function App() {
     setCompletedSets(0);
     setGameWon(false);
     setDragInfo(null);
+    setMoveCount(0); // 이동 횟수 초기화
     clearHistory(); // 히스토리 초기화
   };
 
@@ -1013,6 +1019,7 @@ function App() {
           <div>점수: {score}</div>
           <div>완성된 세트: {completedSets}/8</div>
           <div>남은 카드: {dealPile.length}</div>
+          <div>이동: {moveCount}회</div>
         </div>
         <div className="game-controls">
           <button onClick={dealNewCards} disabled={dealPile.length === 0}>
