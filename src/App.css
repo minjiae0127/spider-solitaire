@@ -698,63 +698,69 @@
 /* 가로 모드 모바일 */
 @media (max-height: 500px) and (orientation: landscape) {
   .App {
-    padding: 5px;
-    padding-left: max(5px, env(safe-area-inset-left));
-    padding-right: max(5px, env(safe-area-inset-right));
+    padding: 3px;
+    padding-left: max(3px, env(safe-area-inset-left));
+    padding-right: max(3px, env(safe-area-inset-right));
   }
 
   .game-header {
-    padding: 5px 10px;
-    margin-bottom: 5px;
+    padding: 3px 8px;
+    margin-bottom: 3px;
   }
 
   .game-header h1 {
-    font-size: 1.2em;
-    margin-bottom: 5px;
+    font-size: 1em;
+    margin-bottom: 3px;
   }
 
   .level-display {
-    font-size: 0.9em;
-    margin: 3px 0;
+    font-size: 0.8em;
+    margin: 2px 0;
   }
 
   .game-info {
-    margin: 5px 0;
-    gap: 15px;
-    font-size: 0.9em;
-  }
-
-  .game-controls {
-    margin-top: 5px;
-    gap: 5px;
-  }
-
-  .game-controls button {
-    padding: 5px 10px;
+    margin: 3px 0;
+    gap: 10px;
     font-size: 0.8em;
   }
 
+  .game-controls {
+    margin-top: 3px;
+    gap: 4px;
+  }
+
+  .game-controls button {
+    padding: 4px 8px;
+    font-size: 0.7em;
+  }
+
   .game-board {
-    margin: 5px 0;
-    padding: 5px;
-    gap: 8px;
+    margin: 3px 0;
+    padding: 3px 0;
+    gap: 4px;
+    width: 100%;
+    justify-content: space-between;
   }
 
   .card-pile {
-    width: 60px;
-    min-height: 200px;
-    padding-bottom: 30px;
+    width: calc(12.5% - 4px);
+    min-width: 80px;
+    max-width: none;
+    min-height: 180px;
+    padding-bottom: 20px;
+    flex: 1;
   }
 
   .card {
-    width: 50px;
-    height: 65px;
-    font-size: 16px;
+    width: 90%;
+    max-width: 100px;
+    height: 85px;
+    font-size: 22px;
   }
 
   .card.visible::before,
   .card.visible::after {
-    font-size: 9px;
+    font-size: 11px;
   }
 
   .level-selection {
