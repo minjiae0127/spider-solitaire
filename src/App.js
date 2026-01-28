@@ -427,19 +427,9 @@ function App() {
     const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
     let deck = [];
 
-    // 2덱 생성 (총 104장)
-    for (let i = 0; i < 2; i++) {
-      suits.forEach(suit => {
-        ranks.forEach(rank => {
-          deck.push({ suit, rank, isVisible: false });
-        });
-      });
-    }
-    
-    // 초급과 중급의 경우 카드 수를 맞추기 위해 추가 카드 생성
+    // 레벨에 따라 덱 생성
     if (level === 'beginner') {
       // 1가지 무늬로 104장을 만들기 위해 8덱 생성
-      deck = [];
       for (let i = 0; i < 8; i++) {
         ranks.forEach(rank => {
           deck.push({ suit: '♠', rank, isVisible: false });
@@ -447,9 +437,18 @@ function App() {
       }
     } else if (level === 'intermediate') {
       // 2가지 무늬로 104장을 만들기 위해 4덱 생성
-      deck = [];
+      const intermediateSuits = ['♠', '♥'];
       for (let i = 0; i < 4; i++) {
-        ['♠', '♥'].forEach(suit => {
+        intermediateSuits.forEach(suit => {
+          ranks.forEach(rank => {
+            deck.push({ suit, rank, isVisible: false });
+          });
+        });
+      }
+    } else {
+      // 고급: 4가지 무늬로 2덱 생성 (총 104장)
+      for (let i = 0; i < 2; i++) {
+        suits.forEach(suit => {
           ranks.forEach(rank => {
             deck.push({ suit, rank, isVisible: false });
           });
@@ -981,6 +980,7 @@ function App() {
       setInitialGameBoard(deepCopyBoard);
       setInitialDealPile(deepCopyDeal);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameStarted]);
 
   // 게임이 시작되지 않았으면 레벨 선택 화면 표시
