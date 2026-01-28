@@ -9,11 +9,14 @@
   background: linear-gradient(135deg, #2c5530, #1a4d37);
   min-height: 100vh;
   min-height: 100dvh; /* Dynamic viewport height for mobile */
+  height: 100%;
   color: white;
   font-family: 'Arial', sans-serif;
   box-sizing: border-box;
   -webkit-touch-callout: none; /* iOS에서 롱 프레스 메뉴 비활성화 */
   -webkit-tap-highlight-color: transparent; /* 탭 하이라이트 제거 */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .game-header {
