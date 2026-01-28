@@ -149,7 +149,7 @@
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 14px;
+  font-size: 22px;
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0,0,0,0.3);
   cursor: pointer;
@@ -171,9 +171,9 @@
 .card.visible::before {
   content: attr(data-rank) ' ' attr(data-suit);
   position: absolute;
-  top: 2px;
-  left: 3px;
-  font-size: 10px; /* 8px에서 10px로 증가 */
+  top: 3px;
+  left: 4px;
+  font-size: 12px;
   font-weight: bold;
   line-height: 1;
   color: inherit;
@@ -183,9 +183,9 @@
 .card.visible::after {
   content: attr(data-rank) ' ' attr(data-suit);
   position: absolute;
-  bottom: 2px;
-  right: 3px;
-  font-size: 10px; /* 8px에서 10px로 증가 */
+  bottom: 3px;
+  right: 4px;
+  font-size: 12px;
   font-weight: bold;
   line-height: 1;
   color: inherit;
@@ -528,22 +528,22 @@
   }
 
   .card {
-    width: 36px;
-    height: 50px;
-    font-size: 8px;
+    width: 40px;
+    height: 56px;
+    font-size: 14px;
     border-radius: 4px;
   }
 
   .card.visible::before,
   .card.visible::after {
-    font-size: 6px;
-    top: 1px;
-    left: 1px;
+    font-size: 8px;
+    top: 2px;
+    left: 2px;
   }
 
   .card.visible::after {
-    bottom: 1px;
-    right: 1px;
+    bottom: 2px;
+    right: 2px;
     top: auto;
     left: auto;
   }
@@ -667,21 +667,21 @@
 @media (max-width: 380px) {
   .card-pile {
     width: calc(12.5% - 2px);
-    min-width: 32px;
-    max-width: 42px;
+    min-width: 34px;
+    max-width: 44px;
     min-height: 150px;
   }
 
   .card {
-    width: 30px;
-    height: 42px;
-    font-size: 7px;
+    width: 32px;
+    height: 46px;
+    font-size: 12px;
     border-radius: 3px;
   }
 
   .card.visible::before,
   .card.visible::after {
-    font-size: 5px;
+    font-size: 7px;
   }
 
   .game-controls button {
@@ -749,6 +749,11 @@
   .card {
     width: 50px;
     height: 65px;
+    font-size: 16px;
+  }
+
+  .card.visible::before,
+  .card.visible::after {
     font-size: 9px;
   }
 
