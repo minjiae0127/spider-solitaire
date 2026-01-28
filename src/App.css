@@ -1,11 +1,20 @@
 .App {
   text-align: center;
   padding: 20px;
+  padding-top: max(20px, env(safe-area-inset-top));
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  padding-left: max(20px, env(safe-area-inset-left));
+  padding-right: max(20px, env(safe-area-inset-right));
   user-select: none;
   background: linear-gradient(135deg, #2c5530, #1a4d37);
   min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
   color: white;
   font-family: 'Arial', sans-serif;
+  box-sizing: border-box;
+  -webkit-touch-callout: none; /* iOS에서 롱 프레스 메뉴 비활성화 */
+  -webkit-tap-highlight-color: transparent; /* 탭 하이라이트 제거 */
+  touch-action: manipulation; /* 더블 탭 줌 비활성화 */
 }
 
 .game-header {
@@ -99,11 +108,11 @@
 .card-pile {
   min-height: 400px;
   width: 100px;
-  border: 2px dashed #666;
+  border: 2px dashed rgba(255, 255, 255, 0.15);
   position: relative;
   border-radius: 8px;
   transition: all 0.2s ease;
-  background: rgba(255,255,255,0.05);
+  background: rgba(0, 0, 0, 0.1);
   overflow: visible;
   padding-bottom: 50px;
   /* 카드들을 중앙 정렬하기 위한 설정 */
@@ -111,6 +120,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
+  box-sizing: border-box;
 }
 
 .card-pile.drag-over {
@@ -139,7 +149,7 @@
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 14px;
+  font-size: 22px;
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0,0,0,0.3);
   cursor: pointer;
@@ -161,9 +171,9 @@
 .card.visible::before {
   content: attr(data-rank) ' ' attr(data-suit);
   position: absolute;
-  top: 2px;
-  left: 3px;
-  font-size: 10px; /* 8px에서 10px로 증가 */
+  top: 3px;
+  left: 4px;
+  font-size: 12px;
   font-weight: bold;
   line-height: 1;
   color: inherit;
@@ -173,9 +183,9 @@
 .card.visible::after {
   content: attr(data-rank) ' ' attr(data-suit);
   position: absolute;
-  bottom: 2px;
-  right: 3px;
-  font-size: 10px; /* 8px에서 10px로 증가 */
+  bottom: 3px;
+  right: 4px;
+  font-size: 12px;
   font-weight: bold;
   line-height: 1;
   color: inherit;
@@ -482,34 +492,87 @@
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
+  .App {
+    padding: 10px;
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    padding-left: max(5px, env(safe-area-inset-left));
+    padding-right: max(5px, env(safe-area-inset-right));
+    overflow-x: hidden;
+  }
+
+  .game-header {
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+
+  .game-header h1 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+  }
+
   .game-board {
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 3px;
+    padding: 10px 5px;
+    justify-content: center;
   }
 
   .card-pile {
-    width: 80px;
-    min-height: 300px;
+    width: calc(12.5% - 3px);
+    min-width: 38px;
+    max-width: 50px;
+    min-height: 180px;
+    padding-bottom: 30px;
+    border-width: 1px;
   }
 
   .card {
-    width: 60px;
-    height: 80px;
-    font-size: 10px;
+    width: 40px;
+    height: 56px;
+    font-size: 14px;
+    border-radius: 4px;
+  }
+
+  .card.visible::before,
+  .card.visible::after {
+    font-size: 8px;
+    top: 2px;
+    left: 2px;
+  }
+
+  .card.visible::after {
+    bottom: 2px;
+    right: 2px;
+    top: auto;
+    left: auto;
+  }
+
+  .empty-pile {
+    font-size: 0.6em;
   }
 
   .game-info {
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.85em;
+    justify-content: center;
   }
 
   .game-controls {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: center;
+    gap: 8px;
   }
 
   .game-controls button {
-    width: 200px;
+    width: auto;
+    min-width: 80px;
+    padding: 8px 12px;
+    font-size: 0.8em;
   }
 
   .level-container {
@@ -544,14 +607,25 @@
     font-size: 1em;
   }
 
-  .level-selection h1 {
-    font-size: 2.2em;
+  .level-selection h2 {
+    font-size: 1.8em;
+  }
+
+  .level-selection p {
+    font-size: 1em;
+    margin-bottom: 20px;
   }
 
   .level-buttons {
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
     align-items: center;
+  }
+
+  .level-button {
+    padding: 20px 30px;
+    font-size: 1.1em;
+    min-width: 200px;
   }
 
   .level-card {
@@ -561,5 +635,155 @@
 
   .game-rules {
     margin: 0 10px;
+  }
+
+  .game-instructions {
+    padding: 15px;
+    margin: 20px 10px;
+  }
+
+  .game-instructions h3 {
+    font-size: 1.1em;
+  }
+
+  .game-instructions ul {
+    font-size: 0.9em;
+    padding-left: 20px;
+  }
+
+  .victory-message {
+    font-size: 1.1em;
+    padding: 15px;
+  }
+
+  .hint-message {
+    font-size: 1em;
+    padding: 15px 20px;
+    max-width: 90vw;
+  }
+}
+
+/* 매우 작은 화면용 (iPhone SE 등) */
+@media (max-width: 380px) {
+  .card-pile {
+    width: calc(12.5% - 2px);
+    min-width: 34px;
+    max-width: 44px;
+    min-height: 150px;
+  }
+
+  .card {
+    width: 32px;
+    height: 46px;
+    font-size: 12px;
+    border-radius: 3px;
+  }
+
+  .card.visible::before,
+  .card.visible::after {
+    font-size: 7px;
+  }
+
+  .game-controls button {
+    min-width: 70px;
+    padding: 6px 10px;
+    font-size: 0.75em;
+  }
+
+  .game-info {
+    font-size: 0.75em;
+  }
+}
+
+/* 가로 모드 모바일 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .App {
+    padding: 5px;
+    padding-left: max(5px, env(safe-area-inset-left));
+    padding-right: max(5px, env(safe-area-inset-right));
+  }
+
+  .game-header {
+    padding: 5px 10px;
+    margin-bottom: 5px;
+  }
+
+  .game-header h1 {
+    font-size: 1.2em;
+    margin-bottom: 5px;
+  }
+
+  .level-display {
+    font-size: 0.9em;
+    margin: 3px 0;
+  }
+
+  .game-info {
+    margin: 5px 0;
+    gap: 15px;
+    font-size: 0.9em;
+  }
+
+  .game-controls {
+    margin-top: 5px;
+    gap: 5px;
+  }
+
+  .game-controls button {
+    padding: 5px 10px;
+    font-size: 0.8em;
+  }
+
+  .game-board {
+    margin: 5px 0;
+    padding: 5px;
+    gap: 8px;
+  }
+
+  .card-pile {
+    width: 60px;
+    min-height: 200px;
+    padding-bottom: 30px;
+  }
+
+  .card {
+    width: 50px;
+    height: 65px;
+    font-size: 16px;
+  }
+
+  .card.visible::before,
+  .card.visible::after {
+    font-size: 9px;
+  }
+
+  .level-selection {
+    min-height: 50vh;
+    padding: 20px;
+  }
+
+  .level-selection h2 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+  }
+
+  .level-selection p {
+    font-size: 0.9em;
+    margin-bottom: 15px;
+  }
+
+  .level-buttons {
+    flex-direction: row;
+    gap: 15px;
+  }
+
+  .level-button {
+    padding: 15px 20px;
+    font-size: 1em;
+    min-width: 120px;
+  }
+
+  .game-instructions {
+    display: none; /* 가로 모드에서는 설명 숨김 */
   }
 }
