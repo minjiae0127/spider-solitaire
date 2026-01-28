@@ -72,13 +72,13 @@ function Card({ card, cardIndex, pileIndex, onDragStart, onDragEnd, isDraggable,
     dragContainer.style.top = '-9999px';
     dragContainer.style.left = '-9999px';
     dragContainer.style.width = '80px';
-    dragContainer.style.height = `${100 + (cards.length - 1) * 15}px`;
+    dragContainer.style.height = `${100 + (cards.length - 1) * 18}px`;
     dragContainer.style.pointerEvents = 'none';
 
     cards.forEach((dragCard, index) => {
       const cardElement = document.createElement('div');
       cardElement.style.position = 'absolute';
-      cardElement.style.top = `${index * 15}px`;
+      cardElement.style.top = `${index * 18}px`;
       cardElement.style.left = '0px';
       cardElement.style.width = '80px';
       cardElement.style.height = '100px';
@@ -168,7 +168,7 @@ function Card({ card, cardIndex, pileIndex, onDragStart, onDragEnd, isDraggable,
       data-suit={card.suit}
       style={{
         position: 'absolute',
-        top: `${cardIndex * 15}px`,
+        top: `${cardIndex * 18}px`,
         zIndex: isDragging ? cardIndex + 1000 : cardIndex,
         left: '50%', // 카드 더미 중앙에 위치
         transform: 'translateX(-50%)' // 카드 자체를 중앙 정렬

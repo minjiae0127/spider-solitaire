@@ -14,7 +14,6 @@
   box-sizing: border-box;
   -webkit-touch-callout: none; /* iOS에서 롱 프레스 메뉴 비활성화 */
   -webkit-tap-highlight-color: transparent; /* 탭 하이라이트 제거 */
-  touch-action: manipulation; /* 더블 탭 줌 비활성화 */
 }
 
 .game-header {
@@ -207,6 +206,7 @@
 
 .card.visible.draggable {
   cursor: grab;
+  touch-action: none; /* 모바일에서 드래그 가능하도록 */
 }
 
 .card.visible.draggable:active {
