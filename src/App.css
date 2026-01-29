@@ -108,7 +108,7 @@
 .card-pile {
   min-height: 400px;
   width: 100px;
-  border: 2px dashed rgba(255, 255, 255, 0.15);
+  border: 2px dashed transparent; /* 기본 테두리 투명 - 초록색 점선 버그 수정 */
   position: relative;
   border-radius: 8px;
   transition: all 0.2s ease;
