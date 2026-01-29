@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 
 // 레벨 선택 컴포넌트
@@ -35,7 +35,7 @@ function LevelSelection({ onLevelSelect }) {
 }
 
 // 카드 컴포넌트 - 드래그 기능 추가
-function Card({ card, cardIndex, pileIndex, onDragStart, onDragEnd, isDraggable, onCardClick, isDragging, gameBoard, isNonMovable, hintInfo, showingHint }) {
+function Card({ card, cardIndex, pileIndex, onDragStart, onDragEnd, isDraggable, onCardClick, isDragging, gameBoard, isNonMovable, hintInfo, showingHint, onTouchDragStart }) {
   const handleDragStart = (e) => {
     if (isDraggable) {
       onDragStart(pileIndex, cardIndex);
@@ -57,6 +57,15 @@ function Card({ card, cardIndex, pileIndex, onDragStart, onDragEnd, isDraggable,
     if (onCardClick) {
       onCardClick(pileIndex, cardIndex);
     }
+  };
+
+  // 터치 시작 핸들러 - 즉시 드래그 시작
+  const handleTouchStart = (e) => {
+    if (!isDraggable) return;
+
+    e.preventDefault();
+    const touch = e.touches[0];
+    onTouchDragStart(pileIndex, cardIndex, touch.clientX, touch.clientY);
   };
 
   // 카드 색상 결정 (빨간색: ♥♦, 검은색: ♠♣)
@@ -158,12 +167,13 @@ function Card({ card, cardIndex, pileIndex, onDragStart, onDragEnd, isDraggable,
   };
 
   return (
-    <div 
+    <div
       className={`card ${card.isVisible ? 'visible' : 'hidden'} ${isDraggable ? 'draggable' : ''} ${getCardColor()} ${isDragging ? 'dragging-preview' : ''} ${isNonMovable ? 'non-movable' : ''} ${isHintCard() ? 'hint-source' : ''} ${isHintTarget() ? 'hint-target' : ''}`}
       draggable={isDraggable}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onClick={handleClick}
+      onTouchStart={handleTouchStart}
       data-rank={card.rank}
       data-suit={card.suit}
       style={{
@@ -180,7 +190,7 @@ function Card({ card, cardIndex, pileIndex, onDragStart, onDragEnd, isDraggable,
 }
 
 // 카드 더미 컴포넌트
-function CardPile({ cards, pileIndex, onDragStart, onDragEnd, onDrop, onCardClick, draggingCards, gameBoard, hintInfo, showingHint }) {
+function CardPile({ cards, pileIndex, onDragStart, onDragEnd, onDrop, onCardClick, draggingCards, gameBoard, hintInfo, showingHint, onTouchDragStart }) {
   const [isDragOver, setIsDragOver] = useState(false);
 
   const handleDragOver = (e) => {
@@ -299,7 +309,7 @@ function CardPile({ cards, pileIndex, onDragStart, onDragEnd, onDrop, onCardClic
         <div className="empty-pile">빈 공간</div>
       )}
       {cards.map((card, index) => (
-        <Card 
+        <Card
           key={`${pileIndex}-${index}`}
           card={card}
           cardIndex={index}
@@ -313,6 +323,7 @@ function CardPile({ cards, pileIndex, onDragStart, onDragEnd, onDrop, onCardClic
           gameBoard={gameBoard}
           hintInfo={hintInfo}
           showingHint={showingHint}
+          onTouchDragStart={onTouchDragStart}
         />
       ))}
     </div>
@@ -350,6 +361,9 @@ function App() {
   const [showingHint, setShowingHint] = useState(false);
   // 이동 횟수 카운터 (실행취소해도 줄어들지 않음)
   const [moveCount, setMoveCount] = useState(0);
+  // 터치 드래그 상태
+  const [touchDrag, setTouchDrag] = useState(null);
+  const ghostRef = useRef(null);
 
   // 게임 상태를 히스토리에 저장하는 함수
   const saveGameState = () => {
@@ -402,6 +416,16 @@ function App() {
     setGameHistory([]);
     setCanUndo(false);
   };
+
+  // 터치 드래그 클린업 (컴포넌트 언마운트 시)
+  useEffect(() => {
+    return () => {
+      if (ghostRef.current) {
+        document.body.removeChild(ghostRef.current);
+        ghostRef.current = null;
+      }
+    };
+  }, []);
 
   // 게임 초기화를 게임 시작될 때만 실행하도록 수정
   useEffect(() => {
@@ -546,6 +570,147 @@ function App() {
       // 드래그 시각 효과 제거
       setDraggingCards(null);
     }, 100);
+  };
+
+  // 터치 드래그 시작
+  const handleTouchDragStart = (pileIndex, cardIndex, x, y) => {
+    const draggedCards = gameBoard[pileIndex].slice(cardIndex);
+    const newDragInfo = {
+      sourcePile: pileIndex,
+      startIndex: cardIndex,
+      cards: draggedCards
+    };
+
+    setDragInfo(newDragInfo);
+    setDraggingCards({
+      pileIndex: pileIndex,
+      startIndex: cardIndex
+    });
+    setTouchDrag({
+      startX: x,
+      startY: y,
+      currentX: x,
+      currentY: y,
+      pileIndex,
+      cardIndex,
+      cards: draggedCards
+    });
+
+    // 고스트 엘리먼트 생성
+    createTouchGhost(draggedCards, x, y);
+  };
+
+  // 터치 고스트 엘리먼트 생성
+  const createTouchGhost = (cards, x, y) => {
+    // 기존 고스트 제거
+    if (ghostRef.current) {
+      document.body.removeChild(ghostRef.current);
+    }
+
+    const ghost = document.createElement('div');
+    ghost.style.position = 'fixed';
+    ghost.style.left = `${x - 40}px`;
+    ghost.style.top = `${y - 30}px`;
+    ghost.style.width = '80px';
+    ghost.style.height = `${90 + (cards.length - 1) * 18}px`;
+    ghost.style.pointerEvents = 'none';
+    ghost.style.zIndex = '10000';
+    ghost.style.opacity = '0.9';
+
+    cards.forEach((card, index) => {
+      const cardEl = document.createElement('div');
+      cardEl.style.position = 'absolute';
+      cardEl.style.top = `${index * 18}px`;
+      cardEl.style.left = '0';
+      cardEl.style.width = '80px';
+      cardEl.style.height = '90px';
+      cardEl.style.borderRadius = '8px';
+      cardEl.style.border = '2px solid #333';
+      cardEl.style.display = 'flex';
+      cardEl.style.alignItems = 'center';
+      cardEl.style.justifyContent = 'center';
+      cardEl.style.fontSize = '18px';
+      cardEl.style.fontWeight = 'bold';
+      cardEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.5)';
+      cardEl.style.background = 'linear-gradient(135deg, #ffffff, #f0f0f0)';
+      cardEl.style.color = (card.suit === '♥' || card.suit === '♦') ? '#d32f2f' : '#000';
+      cardEl.textContent = `${card.rank}${card.suit}`;
+      ghost.appendChild(cardEl);
+    });
+
+    document.body.appendChild(ghost);
+    ghostRef.current = ghost;
+  };
+
+  // 터치 이동 핸들러
+  const handleTouchMove = (e) => {
+    if (!touchDrag) return;
+
+    e.preventDefault();
+    const touch = e.touches[0];
+
+    setTouchDrag(prev => ({
+      ...prev,
+      currentX: touch.clientX,
+      currentY: touch.clientY
+    }));
+
+    // 고스트 위치 업데이트
+    if (ghostRef.current) {
+      ghostRef.current.style.left = `${touch.clientX - 40}px`;
+      ghostRef.current.style.top = `${touch.clientY - 30}px`;
+    }
+  };
+
+  // 터치 종료 핸들러
+  const handleTouchEnd = (e) => {
+    if (!touchDrag || !dragInfo) {
+      cleanupTouchDrag();
+      return;
+    }
+
+    // 터치 위치에서 타겟 더미 찾기
+    const x = touchDrag.currentX;
+    const y = touchDrag.currentY;
+
+    // 고스트 숨기기 (elementFromPoint가 고스트를 감지하지 않도록)
+    if (ghostRef.current) {
+      ghostRef.current.style.display = 'none';
+    }
+
+    const targetElement = document.elementFromPoint(x, y);
+    let targetPileIndex = -1;
+
+    // 카드 더미 찾기
+    if (targetElement) {
+      const pileElement = targetElement.closest('.card-pile');
+      if (pileElement) {
+        const piles = document.querySelectorAll('.card-pile');
+        piles.forEach((pile, index) => {
+          if (pile === pileElement) {
+            targetPileIndex = index;
+          }
+        });
+      }
+    }
+
+    // 드롭 처리
+    if (targetPileIndex !== -1 && targetPileIndex !== dragInfo.sourcePile) {
+      handleDrop(targetPileIndex);
+    }
+
+    cleanupTouchDrag();
+  };
+
+  // 터치 드래그 정리
+  const cleanupTouchDrag = () => {
+    if (ghostRef.current) {
+      document.body.removeChild(ghostRef.current);
+      ghostRef.current = null;
+    }
+    setTouchDrag(null);
+    setDragInfo(null);
+    setDraggingCards(null);
   };
 
   // 드롭 처리
@@ -1046,7 +1211,11 @@ function App() {
         </div>
       )}
 
-      <div className="game-board">
+      <div
+        className="game-board"
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         {gameBoard.map((pile, index) => (
           <CardPile
             key={index}
@@ -1056,10 +1225,11 @@ function App() {
             onDragEnd={handleDragEnd}
             onDrop={handleDrop}
             onCardClick={handleCardClick}
-            draggingCards={draggingCards} // 드래그 중인 카드 정보 전달
-            gameBoard={gameBoard} // gameBoard 전달
+            draggingCards={draggingCards}
+            gameBoard={gameBoard}
             hintInfo={hintInfo}
             showingHint={showingHint}
+            onTouchDragStart={handleTouchDragStart}
           />
         ))}
       </div>
