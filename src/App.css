@@ -233,6 +233,25 @@
   transition: all 0.2s ease;
 }
 
+/* 카드 이동 애니메이션 */
+.card.animating {
+  animation: cardMove 0.25s ease-out;
+  z-index: 2000 !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+@keyframes cardMove {
+  0% {
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.1) translateY(-10px);
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+  }
+}
+
 /* 카드 무늬별 색상 */
 .card.red-suit {
   color: #d32f2f;
@@ -350,6 +369,36 @@
   opacity: 0.9;
 }
 
+/* 이어하기 버튼 스타일 */
+.continue-game-section {
+  margin-bottom: 30px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.level-button.continue-btn {
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+  min-width: 280px;
+  animation: continuePulse 2s infinite;
+  border: 2px solid #64B5F6;
+}
+
+.level-button.continue-btn:hover {
+  background: linear-gradient(135deg, #1976D2, #1565C0);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(33, 150, 243, 0.4);
+}
+
+@keyframes continuePulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(33, 150, 243, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(33, 150, 243, 0.8), 0 0 30px rgba(33, 150, 243, 0.4);
+  }
+}
+
 .game-instructions {
   max-width: 800px;
   margin: 30px auto;
@@ -419,6 +468,35 @@
   background: #666 !important;
   cursor: not-allowed !important;
   opacity: 0.6 !important;
+}
+
+/* 자동 완성 버튼 스타일 */
+.auto-complete-btn {
+  background: linear-gradient(135deg, #9C27B0, #7B1FA2) !important;
+  color: white !important;
+  animation: autoCompletePulse 2s infinite;
+}
+
+.auto-complete-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7B1FA2, #6A1B9A) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.auto-complete-btn:disabled {
+  background: #666 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+  animation: none;
+}
+
+@keyframes autoCompletePulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(156, 39, 176, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(156, 39, 176, 0.8), 0 0 25px rgba(156, 39, 176, 0.4);
+  }
 }
 
 /* 힌트 소스 카드 (이동할 카드) 스타일 */
