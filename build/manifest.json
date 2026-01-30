@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "스파이더",
+  "name": "스파이더 카드게임",
   "icons": [
     {
       "src": "favicon.ico",
@@ -19,7 +19,8 @@
     }
   ],
   "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "display": "fullscreen",
+  "orientation": "any",
+  "theme_color": "#2c5530",
+  "background_color": "#2c5530"
 }
