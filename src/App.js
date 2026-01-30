@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 
 // 레벨 선택 컴포넌트
@@ -35,7 +35,7 @@ function LevelSelection({ onLevelSelect }) {
 }
 
 // 카드 컴포넌트 - 드래그 기능 추가
-function Card({ card, cardIndex, pileIndex, onDragStart, onDragEnd, isDraggable, onCardClick, isDragging, gameBoard, isNonMovable, hintInfo, showingHint, onTouchDragStart }) {
+function Card({ card, cardIndex, pileIndex, onDragStart, onDragEnd, isDraggable, onCardClick, onDoubleClick, isDragging, gameBoard, isNonMovable, hintInfo, showingHint, onTouchDragStart, isAnimating }) {
   const handleDragStart = (e) => {
     if (isDraggable) {
       onDragStart(pileIndex, cardIndex);
@@ -56,6 +56,12 @@ function Card({ card, cardIndex, pileIndex, onDragStart, onDragEnd, isDraggable,
   const handleClick = () => {
     if (onCardClick) {
       onCardClick(pileIndex, cardIndex);
+    }
+  };
+
+  const handleDoubleClick = () => {
+    if (onDoubleClick && isDraggable) {
+      onDoubleClick(pileIndex, cardIndex);
     }
   };
 
@@ -168,18 +174,19 @@ function Card({ card, cardIndex, pileIndex, onDragStart, onDragEnd, isDraggable,
 
   return (
     <div
-      className={`card ${card.isVisible ? 'visible' : 'hidden'} ${isDraggable ? 'draggable' : ''} ${getCardColor()} ${isDragging ? 'dragging-preview' : ''} ${isNonMovable ? 'non-movable' : ''} ${isHintCard() ? 'hint-source' : ''} ${isHintTarget() ? 'hint-target' : ''}`}
+      className={`card ${card.isVisible ? 'visible' : 'hidden'} ${isDraggable ? 'draggable' : ''} ${getCardColor()} ${isDragging ? 'dragging-preview' : ''} ${isNonMovable ? 'non-movable' : ''} ${isHintCard() ? 'hint-source' : ''} ${isHintTarget() ? 'hint-target' : ''} ${isAnimating ? 'animating' : ''}`}
       draggable={isDraggable}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
       onTouchStart={handleTouchStart}
       data-rank={card.rank}
       data-suit={card.suit}
       style={{
         position: 'absolute',
         top: `${cardIndex * 18}px`,
-        zIndex: isDragging ? cardIndex + 1000 : cardIndex,
+        zIndex: isDragging || isAnimating ? cardIndex + 1000 : cardIndex,
         left: '50%', // 카드 더미 중앙에 위치
         transform: 'translateX(-50%)' // 카드 자체를 중앙 정렬
       }}
@@ -190,7 +197,7 @@ function Card({ card, cardIndex, pileIndex, onDragStart, onDragEnd, isDraggable,
 }
 
 // 카드 더미 컴포넌트
-function CardPile({ cards, pileIndex, onDragStart, onDragEnd, onDrop, onCardClick, draggingCards, gameBoard, hintInfo, showingHint, onTouchDragStart }) {
+function CardPile({ cards, pileIndex, onDragStart, onDragEnd, onDrop, onCardClick, onDoubleClick, draggingCards, gameBoard, hintInfo, showingHint, onTouchDragStart, animatingCard }) {
   const [isDragOver, setIsDragOver] = useState(false);
 
   // 드래그가 끝나면 drag-over 상태 초기화 (초록색 점선 버그 수정)
@@ -324,6 +331,7 @@ function CardPile({ cards, pileIndex, onDragStart, onDragEnd, onDrop, onCardClic
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
           onCardClick={onCardClick}
+          onDoubleClick={onDoubleClick}
           isDraggable={draggableIndices.includes(index)}
           isDragging={isDraggingCard(index)}
           isNonMovable={nonMovableIndices.includes(index)}
@@ -331,6 +339,7 @@ function CardPile({ cards, pileIndex, onDragStart, onDragEnd, onDrop, onCardClic
           hintInfo={hintInfo}
           showingHint={showingHint}
           onTouchDragStart={onTouchDragStart}
+          isAnimating={animatingCard?.from === pileIndex && index >= (animatingCard?.startIndex || 0)}
         />
       ))}
     </div>
@@ -371,6 +380,10 @@ function App() {
   // 터치 드래그 상태
   const [touchDrag, setTouchDrag] = useState(null);
   const ghostRef = useRef(null);
+  // 자동 완성 상태
+  const [isAutoCompleting, setIsAutoCompleting] = useState(false);
+  // 카드 애니메이션 상태
+  const [animatingCard, setAnimatingCard] = useState(null);
 
   // 게임 상태를 히스토리에 저장하는 함수
   const saveGameState = () => {
@@ -423,6 +436,233 @@ function App() {
     setGameHistory([]);
     setCanUndo(false);
   };
+
+  // 자동 완성 가능 여부 확인 (모든 카드가 보이고, 딜 더미가 비어있을 때)
+  const canAutoComplete = useCallback(() => {
+    if (dealPile.length > 0) return false;
+    if (gameWon) return false;
+
+    // 모든 카드가 보이는지 확인
+    for (const pile of gameBoard) {
+      for (const card of pile) {
+        if (!card.isVisible) return false;
+      }
+    }
+    return true;
+  }, [gameBoard, dealPile, gameWon]);
+
+  // 자동 완성 실행
+  const performAutoComplete = useCallback(async () => {
+    if (isAutoCompleting || !canAutoComplete()) return;
+
+    setIsAutoCompleting(true);
+
+    const autoCompleteStep = () => {
+      const newBoard = gameBoard.map(pile => [...pile]);
+      let moved = false;
+
+      // 완성된 세트 찾아서 제거
+      for (let pileIndex = 0; pileIndex < newBoard.length; pileIndex++) {
+        const pile = newBoard[pileIndex];
+        if (pile.length >= 13) {
+          const topCards = pile.slice(-13);
+          if (isCompletedSet(topCards)) {
+            pile.splice(-13);
+            setGameBoard([...newBoard]);
+            setCompletedSets(prev => {
+              const newSets = prev + 1;
+              if (newSets >= 8) {
+                setGameWon(true);
+                setIsAutoCompleting(false);
+              }
+              return newSets;
+            });
+            setScore(prev => prev + 100);
+            moved = true;
+            return true;
+          }
+        }
+      }
+
+      // 같은 무늬의 연속 카드를 합칠 수 있는지 확인
+      for (let sourcePileIndex = 0; sourcePileIndex < newBoard.length; sourcePileIndex++) {
+        const sourcePile = newBoard[sourcePileIndex];
+        if (sourcePile.length === 0) continue;
+
+        // 이동 가능한 카드 그룹 찾기
+        let startIndex = sourcePile.length - 1;
+        for (let i = sourcePile.length - 2; i >= 0; i--) {
+          const current = sourcePile[i + 1];
+          const prev = sourcePile[i];
+          if (prev.suit === current.suit &&
+              getRankValue(prev.rank) === getRankValue(current.rank) + 1) {
+            startIndex = i;
+          } else {
+            break;
+          }
+        }
+
+        const movingCards = sourcePile.slice(startIndex);
+
+        // 최적의 타겟 찾기 (같은 무늬로 연결 가능한 곳)
+        for (let targetPileIndex = 0; targetPileIndex < newBoard.length; targetPileIndex++) {
+          if (sourcePileIndex === targetPileIndex) continue;
+
+          const targetPile = newBoard[targetPileIndex];
+          if (targetPile.length === 0) continue;
+
+          const topCard = targetPile[targetPile.length - 1];
+          const bottomCard = movingCards[0];
+
+          // 같은 무늬이고 순서가 맞으면 이동
+          if (topCard.suit === bottomCard.suit &&
+              getRankValue(topCard.rank) === getRankValue(bottomCard.rank) + 1) {
+            // 애니메이션 설정
+            setAnimatingCard({
+              from: sourcePileIndex,
+              to: targetPileIndex,
+              cards: movingCards
+            });
+
+            setTimeout(() => {
+              sourcePile.splice(startIndex);
+              targetPile.push(...movingCards);
+              setGameBoard([...newBoard]);
+              setAnimatingCard(null);
+              setMoveCount(prev => prev + 1);
+            }, 200);
+
+            moved = true;
+            return true;
+          }
+        }
+      }
+
+      return moved;
+    };
+
+    // 반복적으로 자동 완성 실행
+    const runAutoComplete = () => {
+      if (gameWon) {
+        setIsAutoCompleting(false);
+        return;
+      }
+
+      const moved = autoCompleteStep();
+      if (moved && !gameWon) {
+        setTimeout(runAutoComplete, 300);
+      } else {
+        setIsAutoCompleting(false);
+      }
+    };
+
+    runAutoComplete();
+  }, [gameBoard, isAutoCompleting, canAutoComplete, gameWon]);
+
+  // 자동 완성 가능 시 버튼 표시를 위한 useEffect
+  useEffect(() => {
+    // 자동 완성 조건이 충족되면 알림
+  }, [canAutoComplete]);
+
+  // 카드 더블클릭/탭 시 자동 이동
+  const handleCardDoubleClick = useCallback((pileIndex, cardIndex) => {
+    if (isAutoCompleting) return;
+
+    const pile = gameBoard[pileIndex];
+    const card = pile[cardIndex];
+
+    // 보이지 않는 카드는 이동 불가
+    if (!card.isVisible) return;
+
+    // 드래그 가능한 카드 그룹 찾기 (같은 무늬의 연속된 카드)
+    let startIndex = cardIndex;
+    for (let i = cardIndex; i < pile.length - 1; i++) {
+      const current = pile[i];
+      const next = pile[i + 1];
+      if (current.suit !== next.suit ||
+          getRankValue(current.rank) !== getRankValue(next.rank) + 1) {
+        return; // 연속되지 않으면 이동 불가
+      }
+    }
+
+    const movingCards = pile.slice(startIndex);
+
+    // 최적의 타겟 더미 찾기
+    let bestTarget = -1;
+    let bestScore = -1;
+
+    for (let targetIndex = 0; targetIndex < gameBoard.length; targetIndex++) {
+      if (targetIndex === pileIndex) continue;
+
+      const targetPile = gameBoard[targetIndex];
+
+      // 빈 더미인 경우
+      if (targetPile.length === 0) {
+        // King이 아니면 빈 더미로 이동은 낮은 우선순위
+        if (movingCards[0].rank === 'K' && bestScore < 1) {
+          bestTarget = targetIndex;
+          bestScore = 1;
+        } else if (bestScore < 0) {
+          bestTarget = targetIndex;
+          bestScore = 0;
+        }
+        continue;
+      }
+
+      const topCard = targetPile[targetPile.length - 1];
+      const bottomCard = movingCards[0];
+
+      // 순서가 맞는지 확인
+      if (getRankValue(topCard.rank) === getRankValue(bottomCard.rank) + 1) {
+        // 같은 무늬면 높은 점수
+        if (topCard.suit === bottomCard.suit) {
+          if (bestScore < 10) {
+            bestTarget = targetIndex;
+            bestScore = 10;
+          }
+        } else if (bestScore < 5) {
+          // 다른 무늬는 중간 점수
+          bestTarget = targetIndex;
+          bestScore = 5;
+        }
+      }
+    }
+
+    // 이동 가능한 타겟이 있으면 이동
+    if (bestTarget !== -1) {
+      // 애니메이션과 함께 이동
+      setAnimatingCard({
+        from: pileIndex,
+        to: bestTarget,
+        cards: movingCards,
+        startIndex: startIndex
+      });
+
+      // 상태 저장
+      saveGameState();
+
+      setTimeout(() => {
+        const newBoard = gameBoard.map(p => [...p]);
+        newBoard[pileIndex].splice(startIndex);
+        newBoard[bestTarget].push(...movingCards);
+
+        // 소스 더미의 다음 카드 공개
+        if (newBoard[pileIndex].length > 0 &&
+            !newBoard[pileIndex][newBoard[pileIndex].length - 1].isVisible) {
+          newBoard[pileIndex][newBoard[pileIndex].length - 1].isVisible = true;
+        }
+
+        setGameBoard(newBoard);
+        setScore(prev => Math.max(0, prev - 1));
+        setMoveCount(prev => prev + 1);
+        setAnimatingCard(null);
+
+        // 완성된 세트 확인
+        checkAndRemoveCompletedSets(newBoard);
+      }, 250);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameBoard, isAutoCompleting, saveGameState]);
 
   // 터치 드래그 클린업 (컴포넌트 언마운트 시)
   useEffect(() => {
@@ -1212,6 +1452,11 @@ function App() {
           <button onClick={requestHint} className="hint-btn" disabled={showingHint}>
             힌트 보기
           </button>
+          {canAutoComplete() && (
+            <button onClick={performAutoComplete} className="auto-complete-btn" disabled={isAutoCompleting}>
+              {isAutoCompleting ? '자동 완성 중...' : '자동 완성'}
+            </button>
+          )}
         </div>
       </header>
 
@@ -1237,11 +1482,13 @@ function App() {
             onDragEnd={handleDragEnd}
             onDrop={handleDrop}
             onCardClick={handleCardClick}
+            onDoubleClick={handleCardDoubleClick}
             draggingCards={draggingCards}
             gameBoard={gameBoard}
             hintInfo={hintInfo}
             showingHint={showingHint}
             onTouchDragStart={handleTouchDragStart}
+            animatingCard={animatingCard}
           />
         ))}
       </div>

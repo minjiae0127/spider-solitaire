@@ -233,6 +233,25 @@
   transition: all 0.2s ease;
 }
 
+/* 카드 이동 애니메이션 */
+.card.animating {
+  animation: cardMove 0.25s ease-out;
+  z-index: 2000 !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+@keyframes cardMove {
+  0% {
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.1) translateY(-10px);
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+  }
+}
+
 /* 카드 무늬별 색상 */
 .card.red-suit {
   color: #d32f2f;
@@ -419,6 +438,35 @@
   background: #666 !important;
   cursor: not-allowed !important;
   opacity: 0.6 !important;
+}
+
+/* 자동 완성 버튼 스타일 */
+.auto-complete-btn {
+  background: linear-gradient(135deg, #9C27B0, #7B1FA2) !important;
+  color: white !important;
+  animation: autoCompletePulse 2s infinite;
+}
+
+.auto-complete-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7B1FA2, #6A1B9A) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.auto-complete-btn:disabled {
+  background: #666 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+  animation: none;
+}
+
+@keyframes autoCompletePulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(156, 39, 176, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(156, 39, 176, 0.8), 0 0 25px rgba(156, 39, 176, 0.4);
+  }
 }
 
 /* 힌트 소스 카드 (이동할 카드) 스타일 */
