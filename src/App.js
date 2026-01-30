@@ -193,6 +193,13 @@ function Card({ card, cardIndex, pileIndex, onDragStart, onDragEnd, isDraggable,
 function CardPile({ cards, pileIndex, onDragStart, onDragEnd, onDrop, onCardClick, draggingCards, gameBoard, hintInfo, showingHint, onTouchDragStart }) {
   const [isDragOver, setIsDragOver] = useState(false);
 
+  // 드래그가 끝나면 drag-over 상태 초기화 (초록색 점선 버그 수정)
+  useEffect(() => {
+    if (!draggingCards) {
+      setIsDragOver(false);
+    }
+  }, [draggingCards]);
+
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation(); // 이벤트 버블링 방지
