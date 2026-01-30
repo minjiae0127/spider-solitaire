@@ -1,12 +1,85 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 
+// localStorage 키 상수
+const SAVE_KEY = 'spider-solitaire-save';
+
+// 저장된 게임 불러오기
+const loadSavedGame = () => {
+  try {
+    const saved = localStorage.getItem(SAVE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error('저장된 게임 불러오기 실패:', e);
+  }
+  return null;
+};
+
+// 게임 저장하기
+const saveGameToStorage = (gameState) => {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      ...gameState,
+      savedAt: Date.now()
+    }));
+  } catch (e) {
+    console.error('게임 저장 실패:', e);
+  }
+};
+
+// 저장된 게임 삭제
+const clearSavedGame = () => {
+  try {
+    localStorage.removeItem(SAVE_KEY);
+  } catch (e) {
+    console.error('저장된 게임 삭제 실패:', e);
+  }
+};
+
 // 레벨 선택 컴포넌트
-function LevelSelection({ onLevelSelect }) {
+function LevelSelection({ onLevelSelect, onContinueGame, savedGame }) {
+  const getLevelName = (level) => {
+    switch(level) {
+      case 'beginner': return '초급';
+      case 'intermediate': return '중급';
+      case 'advanced': return '고급';
+      default: return '';
+    }
+  };
+
+  const formatSavedTime = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now - date;
+
+    if (diff < 60000) return '방금 전';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}분 전`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}시간 전`;
+    return `${Math.floor(diff / 86400000)}일 전`;
+  };
+
   return (
     <div className="level-selection">
       <h2>🕷️ 스파이더 카드게임</h2>
       <p>원하는 난이도를 선택하세요</p>
+
+      {savedGame && (
+        <div className="continue-game-section">
+          <button
+            className="level-button continue-btn"
+            onClick={onContinueGame}
+          >
+            이어하기
+            <div className="level-description">
+              {getLevelName(savedGame.gameLevel)} - 점수: {savedGame.score} - {formatSavedTime(savedGame.savedAt)}
+            </div>
+          </button>
+        </div>
+      )}
+
       <div className="level-buttons">
         <button
           className="level-button beginner"
@@ -384,6 +457,32 @@ function App() {
   const [isAutoCompleting, setIsAutoCompleting] = useState(false);
   // 카드 애니메이션 상태
   const [animatingCard, setAnimatingCard] = useState(null);
+  // 저장된 게임 상태
+  const [savedGame, setSavedGame] = useState(() => loadSavedGame());
+
+  // 자동 저장 useEffect - 게임 상태가 변경될 때마다 저장
+  useEffect(() => {
+    // 게임이 시작되지 않았거나, 게임이 끝났으면 저장하지 않음
+    if (!gameStarted || gameWon) return;
+    // 게임 보드가 비어있으면 저장하지 않음
+    if (gameBoard.length === 0) return;
+    // 자동 완성 중에는 저장하지 않음 (너무 잦은 저장 방지)
+    if (isAutoCompleting) return;
+
+    const gameState = {
+      gameBoard: gameBoard.map(pile => pile.map(card => ({ ...card }))),
+      dealPile: dealPile.map(card => ({ ...card })),
+      score,
+      completedSets,
+      moveCount,
+      gameLevel,
+      initialGameBoard: initialGameBoard.map(pile => pile.map(card => ({ ...card }))),
+      initialDealPile: initialDealPile.map(card => ({ ...card }))
+    };
+
+    saveGameToStorage(gameState);
+    setSavedGame(gameState);
+  }, [gameBoard, dealPile, score, completedSets, moveCount, gameStarted, gameWon, gameLevel, isAutoCompleting, initialGameBoard, initialDealPile]);
 
   // 게임 상태를 히스토리에 저장하는 함수
   const saveGameState = () => {
@@ -564,6 +663,14 @@ function App() {
     // 자동 완성 조건이 충족되면 알림
   }, [canAutoComplete]);
 
+  // 게임 승리 시 저장 데이터 삭제
+  useEffect(() => {
+    if (gameWon) {
+      clearSavedGame();
+      setSavedGame(null);
+    }
+  }, [gameWon]);
+
   // 카드 더블클릭/탭 시 자동 이동
   const handleCardDoubleClick = useCallback((pileIndex, cardIndex) => {
     if (isAutoCompleting) return;
@@ -734,9 +841,39 @@ function App() {
 
   // 레벨 선택 핸들러
   const handleLevelSelect = (level) => {
+    // 새 게임 시작 시 저장된 게임 삭제
+    clearSavedGame();
+    setSavedGame(null);
     setGameLevel(level);
     setGameStarted(true);
     initializeGame(level);
+  };
+
+  // 저장된 게임 이어하기 핸들러
+  const handleContinueGame = () => {
+    const saved = loadSavedGame();
+    if (!saved) return;
+
+    // 저장된 상태 복원
+    setGameBoard(saved.gameBoard.map(pile => pile.map(card => ({ ...card }))));
+    setDealPile(saved.dealPile.map(card => ({ ...card })));
+    setScore(saved.score);
+    setCompletedSets(saved.completedSets);
+    setMoveCount(saved.moveCount || 0);
+    setGameLevel(saved.gameLevel);
+    setGameStarted(true);
+    setGameWon(false);
+
+    // 초기 상태도 복원
+    if (saved.initialGameBoard) {
+      setInitialGameBoard(saved.initialGameBoard.map(pile => pile.map(card => ({ ...card }))));
+    }
+    if (saved.initialDealPile) {
+      setInitialDealPile(saved.initialDealPile.map(card => ({ ...card })));
+    }
+
+    // 히스토리 초기화
+    clearHistory();
   };
 
   // 게임 초기화 함수 수정
@@ -1118,6 +1255,10 @@ function App() {
 
   // 게임 재시작 - 레벨 선택 화면으로 돌아가도록 수정
   const restartGame = () => {
+    // 저장된 게임 삭제
+    clearSavedGame();
+    setSavedGame(null);
+
     setGameStarted(false);
     setGameLevel(null);
     setGameBoard([]);
@@ -1410,7 +1551,11 @@ function App() {
   if (!gameStarted) {
     return (
       <div className="App">
-        <LevelSelection onLevelSelect={handleLevelSelect} />
+        <LevelSelection
+          onLevelSelect={handleLevelSelect}
+          onContinueGame={handleContinueGame}
+          savedGame={savedGame}
+        />
 
         <div className="game-instructions">
           <h3>게임 방법:</h3>

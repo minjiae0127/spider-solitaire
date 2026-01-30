@@ -369,6 +369,36 @@
   opacity: 0.9;
 }
 
+/* 이어하기 버튼 스타일 */
+.continue-game-section {
+  margin-bottom: 30px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.level-button.continue-btn {
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+  min-width: 280px;
+  animation: continuePulse 2s infinite;
+  border: 2px solid #64B5F6;
+}
+
+.level-button.continue-btn:hover {
+  background: linear-gradient(135deg, #1976D2, #1565C0);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(33, 150, 243, 0.4);
+}
+
+@keyframes continuePulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(33, 150, 243, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(33, 150, 243, 0.8), 0 0 30px rgba(33, 150, 243, 0.4);
+  }
+}
+
 .game-instructions {
   max-width: 800px;
   margin: 30px auto;
