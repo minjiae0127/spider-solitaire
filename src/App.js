@@ -972,7 +972,12 @@ function App() {
         return;
       }
 
-      alert('이동 가능한 카드가 없습니다. 새 카드를 배치하거나 뒤집힌 카드를 확인해보세요!');
+      // 현재 상태에서 이동 가능한 카드가 없음을 알림
+      setShowingHint(true);
+      showHintMessage('현재 이동 가능한 카드가 없습니다.');
+      setTimeout(() => {
+        setShowingHint(false);
+      }, 3000);
       return;
     }
 
