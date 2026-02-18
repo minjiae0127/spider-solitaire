@@ -460,6 +460,53 @@ function App() {
   // 저장된 게임 상태
   const [savedGame, setSavedGame] = useState(() => loadSavedGame());
 
+  // --- 새로운 상태 추가 (이미지 기반 기능) ---
+  const [showDealModal, setShowDealModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [settings, setSettings] = useState({
+    showTime: true,
+    showMoves: true,
+    autoComplete: false,
+    tapToMove: true,
+    unlimitedDeals: true,
+    lockOrientation: true
+  });
+  const [gameTime, setGameTime] = useState(0);
+  const [timerActive, setTimerActive] = useState(false);
+  const [magicWandCount, setMagicWandCount] = useState(4);
+
+  // 타이머 로직
+  useEffect(() => {
+    let interval;
+    if (timerActive && !gameWon) {
+      interval = setInterval(() => {
+        setGameTime(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timerActive, gameWon]);
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  // 모달 컴포넌트
+  const Modal = ({ title, onClose, children }) => (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>{title}</h3>
+          <button className="close-btn" onClick={onClose}>&times;</button>
+        </div>
+        <div className="modal-body">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+
   // 자동 저장 useEffect - 게임 상태가 변경될 때마다 저장
   useEffect(() => {
     // 게임이 시작되지 않았거나, 게임이 끝났으면 저장하지 않음
@@ -476,13 +523,15 @@ function App() {
       completedSets,
       moveCount,
       gameLevel,
+      gameTime,
+      magicWandCount,
       initialGameBoard: initialGameBoard.map(pile => pile.map(card => ({ ...card }))),
       initialDealPile: initialDealPile.map(card => ({ ...card }))
     };
 
     saveGameToStorage(gameState);
     setSavedGame(gameState);
-  }, [gameBoard, dealPile, score, completedSets, moveCount, gameStarted, gameWon, gameLevel, isAutoCompleting, initialGameBoard, initialDealPile]);
+  }, [gameBoard, dealPile, score, completedSets, moveCount, gameStarted, gameWon, gameLevel, isAutoCompleting, initialGameBoard, initialDealPile, gameTime, magicWandCount]);
 
   // 게임 상태를 히스토리에 저장하는 함수
   const saveGameState = () => {
@@ -861,8 +910,11 @@ function App() {
     setCompletedSets(saved.completedSets);
     setMoveCount(saved.moveCount || 0);
     setGameLevel(saved.gameLevel);
+    setGameTime(saved.gameTime || 0);
+    setMagicWandCount(saved.magicWandCount || 4);
     setGameStarted(true);
     setGameWon(false);
+    setTimerActive(true);
 
     // 초기 상태도 복원
     if (saved.initialGameBoard) {
@@ -916,6 +968,9 @@ function App() {
     setScore(500);
     setCompletedSets(0);
     setGameWon(false);
+    setGameTime(0);
+    setTimerActive(true);
+    setMagicWandCount(4);
   };
 
   const shuffleDeck = (deck) => {
@@ -1202,7 +1257,7 @@ function App() {
     return true;
   };
 
-  // 카드 클릭 처리 (뒤집힌 카드 클릭 시 앞면으로)
+  // 카드 클릭 처리 (뒤집힌 카드 클릭 시 앞면으로, 보이는 카드 클릭 시 자동 이동)
   const handleCardClick = (pileIndex, cardIndex) => {
     const newGameBoard = [...gameBoard];
     const card = newGameBoard[pileIndex][cardIndex];
@@ -1213,6 +1268,9 @@ function App() {
 
       card.isVisible = true;
       setGameBoard(newGameBoard);
+    } else if (card.isVisible) {
+      // 이미 보이는 카드를 클릭하면 자동 이동 실행
+      handleCardDoubleClick(pileIndex, cardIndex);
     }
   };
 
@@ -1575,33 +1633,13 @@ function App() {
   return (
     <div className="App">
       <header className="game-header">
-        <h1>스파이더 카드게임</h1>
-        <div className="level-display">{getLevelName()}</div>
-        <div className="game-info">
-          <div>점수: {score}</div>
-          <div>완성된 세트: {completedSets}/8</div>
-          <div>남은 카드: {dealPile.length}</div>
-          <div>이동: {moveCount}회</div>
-        </div>
-        <div className="game-controls">
-          <button onClick={dealNewCards} disabled={dealPile.length === 0}>
-            새 카드 배치 ({Math.ceil(dealPile.length / 8)}회 남음)
-          </button>
-          <button onClick={restartGame} className="level-back-btn">레벨 선택으로</button>
-          <button onClick={restartCurrentLevel} className="restart-level-btn">
-            재시작
-          </button>
-          <button onClick={undoLastMove} className="undo-btn" disabled={!canUndo}>
-            실행취소
-          </button>
-          <button onClick={requestHint} className="hint-btn" disabled={showingHint}>
-            힌트 보기
-          </button>
-          {canAutoComplete() && (
-            <button onClick={performAutoComplete} className="auto-complete-btn" disabled={isAutoCompleting}>
-              {isAutoCompleting ? '자동 완성 중...' : '자동 완성'}
-            </button>
-          )}
+        <div className="header-top">
+          <div className="game-title-badge">스파이더</div>
+          <div className="game-stats-header">
+            {settings.showTime && <div className="stat-item">시간: {formatTime(gameTime)}</div>}
+            <div className="stat-item">점수: {score}</div>
+            {settings.showMoves && <div className="stat-item">횟수: {moveCount}</div>}
+          </div>
         </div>
       </header>
 
@@ -1613,30 +1651,143 @@ function App() {
         </div>
       )}
 
-      <div
-        className="game-board"
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {gameBoard.map((pile, index) => (
-          <CardPile
-            key={index}
-            cards={pile}
-            pileIndex={index}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDrop={handleDrop}
-            onCardClick={handleCardClick}
-            onDoubleClick={handleCardDoubleClick}
-            draggingCards={draggingCards}
-            gameBoard={gameBoard}
-            hintInfo={hintInfo}
-            showingHint={showingHint}
-            onTouchDragStart={handleTouchDragStart}
-            animatingCard={animatingCard}
-          />
-        ))}
+      <div className="main-game-container">
+        <div
+          className="game-board"
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          {gameBoard.map((pile, index) => (
+            <CardPile
+              key={index}
+              cards={pile}
+              pileIndex={index}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDrop={handleDrop}
+              onCardClick={handleCardClick}
+              onDoubleClick={handleCardDoubleClick}
+              draggingCards={draggingCards}
+              gameBoard={gameBoard}
+              hintInfo={hintInfo}
+              showingHint={showingHint}
+              onTouchDragStart={handleTouchDragStart}
+              animatingCard={animatingCard}
+            />
+          ))}
+        </div>
+
+        <aside className="game-sidebar">
+          <button className="sidebar-btn" onClick={() => setShowSettingsModal(true)}>
+            <div className="btn-icon">⚙️</div>
+            <div className="btn-text">설정</div>
+          </button>
+          <button className="sidebar-btn" onClick={() => {}}>
+            <div className="btn-icon">🎨</div>
+            <div className="btn-text">테마</div>
+          </button>
+          <button className="sidebar-btn" onClick={() => setShowDealModal(true)}>
+            <div className="btn-icon">❤️</div>
+            <div className="btn-text">놀이</div>
+          </button>
+          <button className="sidebar-btn" onClick={requestHint} disabled={showingHint}>
+            <div className="btn-icon">❓</div>
+            <div className="btn-text">힌트</div>
+          </button>
+          <button className="sidebar-btn" onClick={undoLastMove} disabled={!canUndo}>
+            <div className="btn-icon">↩️</div>
+            <div className="btn-text">되돌리기</div>
+          </button>
+          
+          <div className="deal-pile-container" onClick={dealNewCards}>
+            <div className={`deal-pile-visual ${dealPile.length === 0 ? 'empty' : ''}`}>
+              🂠
+            </div>
+            <div className="deal-count">{Math.ceil(dealPile.length / 8)}</div>
+          </div>
+        </aside>
       </div>
+
+      {showDealModal && (
+        <Modal title="무슨 딜을 원하십니까?" onClose={() => setShowDealModal(false)}>
+          <div className="deal-options">
+            <button className="deal-option-btn magic-wand" onClick={() => {
+              if (magicWandCount > 0) {
+                setMagicWandCount(prev => prev - 1);
+                requestHint();
+                setShowDealModal(false);
+              }
+            }}>
+              ✨ 마술 지팡이 사용({magicWandCount})
+            </button>
+            <button className="deal-option-btn" onClick={() => {
+              initializeGame();
+              setShowDealModal(false);
+            }}>
+              🟢 승리 거래
+            </button>
+            <button className="deal-option-btn" onClick={() => {
+              initializeGame();
+              setShowDealModal(false);
+            }}>
+              🎲 임의 거래
+            </button>
+            <button className="deal-option-btn" onClick={() => {
+              restartCurrentLevel();
+              setShowDealModal(false);
+            }}>
+              🔄 다시 하다
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {showSettingsModal && (
+        <Modal title="설정" onClose={() => setShowSettingsModal(false)}>
+          <div className="settings-grid">
+            <div className="setting-item">
+              <span>시간/횟수 보기</span>
+              <button 
+                className={`toggle-btn ${settings.showTime ? 'on' : 'off'}`}
+                onClick={() => setSettings(s => ({ ...s, showTime: !s.showTime, showMoves: !s.showTime }))}
+              >
+                {settings.showTime ? 'ON' : 'OFF'}
+              </button>
+            </div>
+            <div className="setting-item">
+              <span>잠금 방향</span>
+              <button 
+                className={`toggle-btn ${settings.lockOrientation ? 'on' : 'off'}`}
+                onClick={() => setSettings(s => ({ ...s, lockOrientation: !s.lockOrientation }))}
+              >
+                {settings.lockOrientation ? 'ON' : 'OFF'}
+              </button>
+            </div>
+            <div className="setting-item">
+              <span>자동 완료</span>
+              <button 
+                className={`toggle-btn ${settings.autoComplete ? 'on' : 'off'}`}
+                onClick={() => setSettings(s => ({ ...s, autoComplete: !s.autoComplete }))}
+              >
+                {settings.autoComplete ? 'ON' : 'OFF'}
+              </button>
+            </div>
+            <div className="setting-item">
+              <span>탭으로 옮기기</span>
+              <button 
+                className={`toggle-btn ${settings.tapToMove ? 'on' : 'off'}`}
+                onClick={() => setSettings(s => ({ ...s, tapToMove: !s.tapToMove }))}
+              >
+                {settings.tapToMove ? 'ON' : 'OFF'}
+              </button>
+            </div>
+            <hr />
+            <button className="menu-link-btn" onClick={restartGame}>다른 난이도 선택</button>
+            <button className="menu-link-btn">통계 {'>'}</button>
+            <button className="menu-link-btn">규칙 {'>'}</button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
