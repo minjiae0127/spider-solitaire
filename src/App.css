@@ -34,11 +34,11 @@
 }
 
 .foundation-slot {
-  width: 60px;
-  height: 80px;
-  background: rgba(255, 255, 255, 0.1);
+  width: 50px;
+  height: 70px;
+  background: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
-  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -47,8 +47,9 @@
 .foundation-slot .card {
   width: 100%;
   height: 100%;
-  font-size: 16px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  border-radius: 4px;
 }
 
 .game-stats-header {
@@ -229,22 +230,29 @@
   color: #000;
 }
 
-/* 옮길 수 없는 카드 스타일 (더 반투명하게) */
+/* 옮길 수 없는 카드 스타일 (이미지 느낌을 살려 자연스럽게 dimming) */
 .card.non-movable {
-  opacity: 0.3 !important;
-  filter: grayscale(100%) brightness(0.8);
-  cursor: not-allowed !important;
+  opacity: 0.8 !important; /* 너무 투명하지 않게 */
+  filter: brightness(0.7) contrast(0.9); /* 살짝 어둡게 처리 */
+  cursor: default !important;
 }
 
 .card.non-movable.visible {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: rgba(255, 255, 255, 0.3) !important;
-  border: 1px dashed rgba(255, 255, 255, 0.2) !important;
+  background: linear-gradient(135deg, #e0e0e0, #bdbdbd) !important;
+  color: #555 !important;
+  border: 1px solid #999 !important;
 }
 
-.card.non-movable::before,
-.card.non-movable::after {
-  opacity: 0.2;
+/* 뒷면 카드 디자인 (이미지의 달/별 패턴 느낌) */
+.card.hidden {
+  background: #1e3a8a;
+  background-image: 
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2) 0%, transparent 10%),
+    radial-gradient(circle at 70% 60%, rgba(255, 255, 255, 0.1) 0%, transparent 15%),
+    linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  border: 2px solid #fff;
+  color: transparent;
+  position: absolute;
 }
 
 .card.draggable:hover {
