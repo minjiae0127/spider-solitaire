@@ -230,16 +230,16 @@
   color: #000;
 }
 
-/* 옮길 수 없는 카드 스타일 (이미지 느낌을 살려 자연스럽게 dimming) */
+/* 옮길 수 없는 카드 스타일 (완전 불투명하게 수정하여 겹침 문제 해결) */
 .card.non-movable {
-  opacity: 0.8 !important; /* 너무 투명하지 않게 */
-  filter: brightness(0.7) contrast(0.9); /* 살짝 어둡게 처리 */
+  opacity: 1 !important; 
+  filter: brightness(0.85); /* 전체적으로 살짝 어둡게 처리 */
   cursor: default !important;
 }
 
 .card.non-movable.visible {
-  background: linear-gradient(135deg, #e0e0e0, #bdbdbd) !important;
-  color: #555 !important;
+  background: linear-gradient(135deg, #dcdcdc, #bcbcbc) !important; /* 불투명한 회색톤으로 변경 */
+  color: #444 !important;
   border: 1px solid #999 !important;
 }
 
