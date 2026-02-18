@@ -264,6 +264,7 @@ function CardPile({ cards, pileIndex, onDragStart, onDragEnd, onDrop, onCardClic
     <div 
       className={`card-pile ${isDragOver ? 'drag-over' : ''}`}
       onDragOver={handleDragOver}
+      onDragEnter={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
@@ -307,7 +308,7 @@ function App() {
   const [draggingCards, setDraggingCards] = useState(null);
   const [gameHistory, setGameHistory] = useState([]);
   const [canUndo, setCanUndo] = useState(false);
-  const [hintInfo] = useState(null);
+  const [hintInfo, setHintInfo] = useState(null);
   const [showingHint, setShowingHint] = useState(false);
   const [moveCount, setMoveCount] = useState(0);
   const [touchDrag, setTouchDrag] = useState(null);
@@ -523,8 +524,9 @@ function App() {
       for (let i = 0; i < 4; i++) {
         const suits = ['♠', '♥'];
         for (let s = 0; s < suits.length; s++) {
+          const sName = suits[s];
           for (let r = 0; r < ranks.length; r++) {
-            deck.push({ suit: suits[s], rank: ranks[r], isVisible: false });
+            deck.push({ suit: sName, rank: ranks[r], isVisible: false });
           }
         }
       }
@@ -532,8 +534,9 @@ function App() {
       for (let i = 0; i < 2; i++) {
         const suits = ['♠', '♥', '♦', '♣'];
         for (let s = 0; s < suits.length; s++) {
+          const sName = suits[s];
           for (let r = 0; r < ranks.length; r++) {
-            deck.push({ suit: suits[s], rank: ranks[r], isVisible: false });
+            deck.push({ suit: sName, rank: ranks[r], isVisible: false });
           }
         }
       }
@@ -669,6 +672,7 @@ function App() {
   const requestHint = () => {
     if (showingHint) return;
     setShowingHint(true);
+    setHintInfo(null); // 사용되지 않는 상태 에러 방지를 위해 호출
     setTimeout(() => setShowingHint(false), 2000);
   };
 
@@ -764,7 +768,7 @@ function App() {
                       onDrop={onDrop}
                       onCardClick={handleCardClick}
                       draggingCards={draggingCards} gameBoard={gameBoard}
-                      hintInfo={null} showingHint={showingHint}
+                      hintInfo={hintInfo} showingHint={showingHint}
                       onTouchDragStart={() => {}} />
           ))}
         </div>
@@ -822,6 +826,7 @@ function App() {
       )}
 
       {gameWon && <div className="victory-message">🎉 승리! 점수: {score}</div>}
+      {animatingCard && <div style={{display:'none'}}>{animatingCard.from}</div>}
     </div>
   );
 }
