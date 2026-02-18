@@ -543,6 +543,7 @@ function App() {
       completedPiles: completedPiles.map(p => ({ ...p })),
       score: score,
       completedSets: completedSets,
+      moveCount: moveCount, // 이동 횟수 추가
       gameWon: gameWon
     };
 
@@ -569,6 +570,7 @@ function App() {
     setCompletedPiles(lastState.completedPiles.map(p => ({ ...p })));
     setScore(lastState.score);
     setCompletedSets(lastState.completedSets);
+    setMoveCount(lastState.moveCount); // 이동 횟수 복원
     setGameWon(lastState.gameWon);
 
     // 드래그 관련 상태 초기화 (카드 흐림 현상 방지)
