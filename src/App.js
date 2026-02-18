@@ -1724,6 +1724,13 @@ function App() {
             <div className="btn-icon">↩️</div>
             <div className="btn-text">되돌리기</div>
           </button>
+
+          {canAutoComplete() && (
+            <button className="sidebar-btn auto-complete-active" onClick={performAutoComplete} disabled={isAutoCompleting}>
+              <div className="btn-icon">✨</div>
+              <div className="btn-text">{isAutoCompleting ? '완성중' : '자동완성'}</div>
+            </button>
+          )}
           
           <div className="deal-pile-container" onClick={dealNewCards}>
             <div className={`deal-pile-visual ${dealPile.length === 0 ? 'empty' : ''}`}>
