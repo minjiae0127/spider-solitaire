@@ -8,9 +8,7 @@ const SAVE_KEY = 'spider-solitaire-save';
 const loadSavedGame = () => {
   try {
     const saved = localStorage.getItem(SAVE_KEY);
-    if (saved) {
-      return JSON.parse(saved);
-    }
+    if (saved) return JSON.parse(saved);
   } catch (e) {
     console.error('저장된 게임 불러오기 실패:', e);
   }
@@ -62,7 +60,6 @@ function LevelSelection({ onLevelSelect, onContinueGame, savedGame }) {
     const date = new Date(timestamp);
     const now = new Date();
     const diff = now - date;
-
     if (diff < 60000) return '방금 전';
     if (diff < 3600000) return `${Math.floor(diff / 60000)}분 전`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)}시간 전`;
@@ -73,13 +70,9 @@ function LevelSelection({ onLevelSelect, onContinueGame, savedGame }) {
     <div className="level-selection">
       <h2>🕷️ 스파이더 카드게임</h2>
       <p>원하는 난이도를 선택하세요</p>
-
       {savedGame && (
         <div className="continue-game-section">
-          <button
-            className="level-button continue-btn"
-            onClick={onContinueGame}
-          >
+          <button className="level-button continue-btn" onClick={onContinueGame}>
             이어하기
             <div className="level-description">
               {getLevelName(savedGame.gameLevel)} - 점수: {savedGame.score} - {formatSavedTime(savedGame.savedAt)}
@@ -87,28 +80,15 @@ function LevelSelection({ onLevelSelect, onContinueGame, savedGame }) {
           </button>
         </div>
       )}
-
       <div className="level-buttons">
-        <button
-          className="level-button beginner"
-          onClick={() => onLevelSelect('beginner')}
-        >
-          초급
-          <div className="level-description">1가지 무늬 (♠️만)</div>
+        <button className="level-button beginner" onClick={() => onLevelSelect('beginner')}>
+          초급 <div className="level-description">1가지 무늬 (♠️만)</div>
         </button>
-        <button
-          className="level-button intermediate"
-          onClick={() => onLevelSelect('intermediate')}
-        >
-          중급
-          <div className="level-description">2가지 무늬 (♠️♥️)</div>
+        <button className="level-button intermediate" onClick={() => onLevelSelect('intermediate')}>
+          중급 <div className="level-description">2가지 무늬 (♠️♥️)</div>
         </button>
-        <button
-          className="level-button advanced"
-          onClick={() => onLevelSelect('advanced')}
-        >
-          고급
-          <div className="level-description">4가지 무늬 (♠️♥️♦️♣️)</div>
+        <button className="level-button advanced" onClick={() => onLevelSelect('advanced')}>
+          고급 <div className="level-description">4가지 무늬 (♠️♥️♦️♣️)</div>
         </button>
       </div>
     </div>
@@ -124,67 +104,31 @@ function Modal({ title, onClose, children }) {
           <h3>{title}</h3>
           <button className="close-btn" onClick={onClose}>&times;</button>
         </div>
-        <div className="modal-body">
-          {children}
-        </div>
+        <div className="modal-body">{children}</div>
       </div>
     </div>
   );
 }
 
 // 카드 컴포넌트
-function Card({ card, cardIndex, pileIndex, onDragStart, onDragEnd, isDraggable, onCardClick, isDragging, gameBoard, isNonMovable, hintInfo, showingHint, onTouchDragStart, isAnimating }) {
+function Card({ card, cardIndex, pileIndex, onDragStart, onDragEnd, isDraggable, onCardClick, isDragging, isNonMovable, isAnimating }) {
   const handleDragStart = (e) => {
     if (isDraggable) {
       onDragStart(pileIndex, cardIndex);
       e.dataTransfer.effectAllowed = 'move';
     }
   };
-
-  const handleDragEnd = () => {
-    onDragEnd();
-  };
-
-  const handleClick = () => {
-    if (onCardClick) {
-      onCardClick(pileIndex, cardIndex);
-    }
-  };
-
-  const handleTouchStart = (e) => {
-    if (!isDraggable) return;
-    e.preventDefault();
-    const touch = e.touches[0];
-    onTouchDragStart(pileIndex, cardIndex, touch.clientX, touch.clientY);
-  };
-
   const getCardColor = () => {
     if (!card.isVisible) return '';
     return (card.suit === '♥' || card.suit === '♦') ? 'red-suit' : 'black-suit';
   };
-
-  const isHintCard = () => {
-    if (!hintInfo || !showingHint) return false;
-    return hintInfo.from === pileIndex &&
-           hintInfo.cards.some(hintCard =>
-             hintCard.suit === card.suit &&
-             hintCard.rank === card.rank
-           );
-  };
-
-  const isHintTarget = () => {
-    if (!hintInfo || !showingHint) return false;
-    return hintInfo.to === pileIndex && cardIndex === gameBoard[pileIndex].length - 1;
-  };
-
   return (
     <div
-      className={`card ${card.isVisible ? 'visible' : 'hidden'} ${isDraggable ? 'draggable' : ''} ${getCardColor()} ${isDragging ? 'dragging-preview' : ''} ${isNonMovable ? 'non-movable' : ''} ${isHintCard() ? 'hint-source' : ''} ${isHintTarget() ? 'hint-target' : ''} ${isAnimating ? 'animating' : ''}`}
+      className={`card ${card.isVisible ? 'visible' : 'hidden'} ${isDraggable ? 'draggable' : ''} ${getCardColor()} ${isDragging ? 'dragging-preview' : ''} ${isNonMovable ? 'non-movable' : ''} ${isAnimating ? 'animating' : ''}`}
       draggable={isDraggable}
       onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onClick={handleClick}
-      onTouchStart={handleTouchStart}
+      onDragEnd={onDragEnd}
+      onClick={() => onCardClick(pileIndex, cardIndex)}
       data-rank={card.rank}
       data-suit={card.suit}
       style={{
@@ -201,59 +145,22 @@ function Card({ card, cardIndex, pileIndex, onDragStart, onDragEnd, isDraggable,
 }
 
 // 카드 더미 컴포넌트
-function CardPile({ cards, pileIndex, onDragStart, onDragEnd, onDrop, onCardClick, draggingCards, gameBoard, hintInfo, showingHint, onTouchDragStart, animatingCard }) {
+function CardPile({ cards, pileIndex, onDragStart, onDragEnd, onDrop, onCardClick, draggingCards, animatingCard }) {
   const [isDragOver, setIsDragOver] = useState(false);
-
-  useEffect(() => {
-    if (!draggingCards) {
-      setIsDragOver(false);
-    }
-  }, [draggingCards]);
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    onDrop(pileIndex);
-  };
-
-  const getDraggableCards = () => {
-    const draggableIndices = [];
-    for (let i = cards.length - 1; i >= 0; i--) {
-      if (!cards[i].isVisible) break;
-      draggableIndices.unshift(i);
-      if (i > 0 && cards[i - 1].isVisible) {
-        const currentRank = getRankValue(cards[i].rank);
-        const prevRank = getRankValue(cards[i - 1].rank);
-        if (currentRank !== prevRank - 1 || cards[i].suit !== cards[i - 1].suit) break;
-      } else {
-        break;
-      }
-    }
-    return draggableIndices;
-  };
-
-  const getNonMovableCards = () => {
-    const draggableIndices = getDraggableCards();
-    const nonMovableIndices = [];
-    for (let i = 0; i < cards.length; i++) {
-      if (cards[i].isVisible && !draggableIndices.includes(i)) {
-        nonMovableIndices.push(i);
-      }
-    }
-    return nonMovableIndices;
-  };
-
-  const draggableIndices = getDraggableCards();
-  const nonMovableIndices = getNonMovableCards();
+  const handleDragOver = (e) => { e.preventDefault(); setIsDragOver(true); };
+  const handleDragLeave = () => setIsDragOver(false);
+  const handleDrop = (e) => { e.preventDefault(); setIsDragOver(false); onDrop(pileIndex); };
+  
+  const draggableIndices = [];
+  for (let i = cards.length - 1; i >= 0; i--) {
+    if (!cards[i].isVisible) break;
+    draggableIndices.unshift(i);
+    if (i > 0 && cards[i - 1].isVisible) {
+      const currentRank = getRankValue(cards[i].rank);
+      const prevRank = getRankValue(cards[i - 1].rank);
+      if (currentRank !== prevRank - 1 || cards[i].suit !== cards[i - 1].suit) break;
+    } else break;
+  }
 
   const isDraggingCard = (cardIndex) => {
     if (!draggingCards || draggingCards.pileIndex !== pileIndex) return false;
@@ -262,29 +169,14 @@ function CardPile({ cards, pileIndex, onDragStart, onDragEnd, onDrop, onCardClic
 
   return (
     <div 
-      className={`card-pile ${isDragOver ? 'drag-over' : ''}`}
-      onDragOver={handleDragOver}
-      onDragEnter={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      className={`card-pile ${isDragOver ? 'drag-over' : ''}`} onDragOver={handleDragOver} onDragEnter={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
     >
-      {cards.length === 0 && <div className="empty-pile"></div>}
       {cards.map((card, index) => (
         <Card
-          key={`${pileIndex}-${index}`}
-          card={card}
-          cardIndex={index}
-          pileIndex={pileIndex}
-          onDragStart={onDragStart}
-          onDragEnd={onDragEnd}
-          onCardClick={onCardClick}
-          isDraggable={draggableIndices.includes(index)}
-          isDragging={isDraggingCard(index)}
-          isNonMovable={nonMovableIndices.includes(index)}
-          gameBoard={gameBoard}
-          hintInfo={hintInfo}
-          showingHint={showingHint}
-          onTouchDragStart={onTouchDragStart}
+          key={`${pileIndex}-${index}`} card={card} cardIndex={index} pileIndex={pileIndex}
+          onDragStart={onDragStart} onDragEnd={onDragEnd} onCardClick={onCardClick}
+          isDraggable={draggableIndices.includes(index)} isDragging={isDraggingCard(index)}
+          isNonMovable={card.isVisible && !draggableIndices.includes(index)}
           isAnimating={animatingCard?.from === pileIndex && index >= (animatingCard?.startIndex || 0)}
         />
       ))}
@@ -308,35 +200,25 @@ function App() {
   const [draggingCards, setDraggingCards] = useState(null);
   const [gameHistory, setGameHistory] = useState([]);
   const [canUndo, setCanUndo] = useState(false);
-  const [hintInfo, setHintInfo] = useState(null);
   const [showingHint, setShowingHint] = useState(false);
   const [moveCount, setMoveCount] = useState(0);
-  const [touchDrag, setTouchDrag] = useState(null);
-  const ghostRef = useRef(null);
   const [isAutoCompleting, setIsAutoCompleting] = useState(false);
   const [animatingCard, setAnimatingCard] = useState(null);
-  const [savedGame, setSavedGame] = useState(() => loadSavedGame());
+  const [savedGame] = useState(() => loadSavedGame());
 
   const [showDealModal, setShowDealModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [settings, setSettings] = useState({
-    showTime: true,
-    showMoves: true,
-    autoComplete: false,
-    tapToMove: true,
-    unlimitedDeals: true,
-    lockOrientation: true
-  });
+  const [settings, setSettings] = useState({ showTime: true });
   const [gameTime, setGameTime] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
   const [magicWandCount, setMagicWandCount] = useState(4);
 
+  const ghostRef = useRef(null);
+
   useEffect(() => {
     let interval;
     if (timerActive && !gameWon) {
-      interval = setInterval(() => {
-        setGameTime(prev => prev + 1);
-      }, 1000);
+      interval = setInterval(() => setGameTime(prev => prev + 1), 1000);
     }
     return () => clearInterval(interval);
   }, [timerActive, gameWon]);
@@ -349,386 +231,231 @@ function App() {
 
   useEffect(() => {
     if (!gameStarted || gameWon || gameBoard.length === 0 || isAutoCompleting) return;
-    const gameState = {
-      gameBoard: gameBoard.map(pile => pile.map(card => ({ ...card }))),
-      dealPile: dealPile.map(card => ({ ...card })),
-      completedPiles: completedPiles.map(p => ({ ...p })),
-      score,
-      completedSets,
-      moveCount,
-      gameLevel,
-      gameTime,
-      magicWandCount,
-      initialGameBoard: initialGameBoard.map(pile => pile.map(card => ({ ...card }))),
-      initialDealPile: initialDealPile.map(card => ({ ...card }))
-    };
-    saveGameToStorage(gameState);
-    setSavedGame(gameState);
+    saveGameToStorage({
+      gameBoard, dealPile, completedPiles, score, completedSets, moveCount,
+      gameLevel, gameTime, magicWandCount, initialGameBoard, initialDealPile
+    });
   }, [gameBoard, dealPile, completedPiles, score, completedSets, moveCount, gameStarted, gameWon, gameLevel, isAutoCompleting, initialGameBoard, initialDealPile, gameTime, magicWandCount]);
-
-  const isCompletedSet = useCallback((cards) => {
-    if (cards.length !== 13) return false;
-    const firstSuit = cards[0].suit;
-    for (let i = 0; i < 13; i++) {
-      if (!cards[i].isVisible || cards[i].suit !== firstSuit || getRankValue(cards[i].rank) !== 13 - i) {
-        return false;
-      }
-    }
-    return true;
-  }, []);
-
-  const checkAndRemoveCompletedSets = useCallback((board) => {
-    const newBoard = [...board];
-    let setsRemoved = 0;
-    const removedSets = [];
-    for (let pileIndex = 0; pileIndex < newBoard.length; pileIndex++) {
-      const pile = newBoard[pileIndex];
-      if (pile.length >= 13) {
-        const topCards = pile.slice(-13);
-        if (isCompletedSet(topCards)) {
-          const set = pile.splice(-13);
-          removedSets.push(set[0]);
-          setsRemoved++;
-          if (pile.length > 0 && !pile[pile.length - 1].isVisible) {
-            pile[pile.length - 1].isVisible = true;
-          }
-        }
-      }
-    }
-    if (setsRemoved > 0) {
-      setGameBoard(newBoard);
-      setCompletedPiles(prev => [...prev, ...removedSets]);
-      setCompletedSets(prev => prev + setsRemoved);
-      setScore(prev => prev + (setsRemoved * 100));
-      if (completedSets + setsRemoved >= 8) setGameWon(true);
-    }
-  }, [completedSets, isCompletedSet]);
 
   const saveGameState = useCallback(() => {
     const currentState = {
-      gameBoard: gameBoard.map(pile => pile.map(card => ({ ...card }))),
-      dealPile: dealPile.map(card => ({ ...card })),
-      completedPiles: completedPiles.map(p => ({ ...p })),
-      score,
-      completedSets,
-      moveCount,
-      gameWon
+      gameBoard: gameBoard.map(p => p.map(c => ({...c}))),
+      dealPile: dealPile.map(c => ({...c})),
+      completedPiles: completedPiles.map(c => ({...c})),
+      score, completedSets, moveCount, gameWon
     };
     setGameHistory(prev => {
-      const newHistory = [...prev, currentState];
-      if (newHistory.length > 20) newHistory.shift();
-      return newHistory;
+      const newH = [...prev, currentState];
+      if (newH.length > 20) newH.shift();
+      return newH;
     });
     setCanUndo(true);
   }, [gameBoard, dealPile, completedPiles, score, completedSets, moveCount, gameWon]);
 
   const undoLastMove = () => {
     if (gameHistory.length === 0) return;
-    const lastState = gameHistory[gameHistory.length - 1];
-    setGameBoard(lastState.gameBoard.map(pile => pile.map(card => ({ ...card }))));
-    setDealPile(lastState.dealPile.map(card => ({ ...card })));
-    setCompletedPiles(lastState.completedPiles.map(p => ({ ...p })));
-    setScore(lastState.score);
-    setCompletedSets(lastState.completedSets);
-    setMoveCount(lastState.moveCount);
-    setGameWon(lastState.gameWon);
-    setDragInfo(null);
-    setDraggingCards(null);
+    const last = gameHistory[gameHistory.length - 1];
+    setGameBoard(last.gameBoard);
+    setDealPile(last.dealPile);
+    setCompletedPiles(last.completedPiles);
+    setScore(last.score);
+    setCompletedSets(last.completedSets);
+    setMoveCount(last.moveCount);
+    setGameWon(last.gameWon);
     setGameHistory(prev => {
-      const newHistory = prev.slice(0, -1);
-      setCanUndo(newHistory.length > 0);
-      return newHistory;
+      const newH = prev.slice(0, -1);
+      setCanUndo(newH.length > 0);
+      return newH;
     });
   };
 
-  const clearHistory = () => {
-    setGameHistory([]);
-    setCanUndo(false);
-  };
+  const isCompletedSet = useCallback((cards) => {
+    if (cards.length !== 13) return false;
+    const suit = cards[0].suit;
+    for (let i = 0; i < 13; i++) {
+      if (!cards[i].isVisible || cards[i].suit !== suit || getRankValue(cards[i].rank) !== 13 - i) return false;
+    }
+    return true;
+  }, []);
+
+  const checkAndRemoveCompletedSets = useCallback((board) => {
+    const newBoard = [...board];
+    let removedCount = 0;
+    const removedSets = [];
+    for (let i = 0; i < newBoard.length; i++) {
+      if (newBoard[i].length >= 13) {
+        const top = newBoard[i].slice(-13);
+        if (isCompletedSet(top)) {
+          const set = newBoard[i].splice(-13);
+          removedSets.push(set[0]);
+          removedCount++;
+          if (newBoard[i].length > 0) newBoard[i][newBoard[i].length - 1].isVisible = true;
+        }
+      }
+    }
+    if (removedCount > 0) {
+      setGameBoard(newBoard);
+      setCompletedPiles(prev => [...prev, ...removedSets]);
+      setCompletedSets(prev => prev + removedCount);
+      setScore(prev => prev + (removedCount * 100));
+      if (completedSets + removedCount >= 8) setGameWon(true);
+    }
+  }, [completedSets, isCompletedSet]);
 
   const handleCardDoubleClick = useCallback((pileIndex, cardIndex) => {
     if (isAutoCompleting) return;
     const pile = gameBoard[pileIndex];
-    const card = pile[cardIndex];
-    if (!card.isVisible) return;
+    if (!pile[cardIndex].isVisible) return;
     for (let i = cardIndex; i < pile.length - 1; i++) {
       if (pile[i].suit !== pile[i + 1].suit || getRankValue(pile[i].rank) !== getRankValue(pile[i + 1].rank) + 1) return;
     }
-    const movingCards = pile.slice(cardIndex);
-    let bestTarget = -1;
-    let bestScore = -1;
-    for (let targetIndex = 0; targetIndex < gameBoard.length; targetIndex++) {
-      if (targetIndex === pileIndex) continue;
-      const targetPile = gameBoard[targetIndex];
-      if (targetPile.length === 0) {
-        if (movingCards[0].rank === 'K' && bestScore < 1) { bestTarget = targetIndex; bestScore = 1; }
-        else if (bestScore < 0) { bestTarget = targetIndex; bestScore = 0; }
-        continue;
-      }
-      const topCard = targetPile[targetPile.length - 1];
-      if (getRankValue(topCard.rank) === getRankValue(movingCards[0].rank) + 1) {
-        if (topCard.suit === movingCards[0].suit) { if (bestScore < 10) { bestTarget = targetIndex; bestScore = 10; } }
-        else if (bestScore < 5) { bestTarget = targetIndex; bestScore = 5; }
+    const moving = pile.slice(cardIndex);
+    let bestT = -1, bestS = -1;
+    for (let i = 0; i < gameBoard.length; i++) {
+      if (i === pileIndex) continue;
+      const target = gameBoard[i];
+      if (target.length === 0) {
+        if (moving[0].rank === 'K' && bestS < 1) { bestT = i; bestS = 1; }
+        else if (bestS < 0) { bestT = i; bestS = 0; }
+      } else {
+        const top = target[target.length - 1];
+        if (getRankValue(top.rank) === getRankValue(moving[0].rank) + 1) {
+          if (top.suit === moving[0].suit) { if (bestS < 10) { bestT = i; bestS = 10; } }
+          else if (bestS < 5) { bestT = i; bestS = 5; }
+        }
       }
     }
-    if (bestTarget !== -1) {
+    if (bestT !== -1) {
       saveGameState();
-      setAnimatingCard({ from: pileIndex, to: bestTarget, cards: movingCards, startIndex: cardIndex });
+      setAnimatingCard({ from: pileIndex, to: bestT, cards: moving, startIndex: cardIndex });
       setTimeout(() => {
-        const newBoard = gameBoard.map(p => [...p]);
-        newBoard[pileIndex].splice(cardIndex);
-        newBoard[bestTarget].push(...movingCards);
-        if (newBoard[pileIndex].length > 0 && !newBoard[pileIndex][newBoard[pileIndex].length - 1].isVisible) {
-          newBoard[pileIndex][newBoard[pileIndex].length - 1].isVisible = true;
-        }
-        setGameBoard(newBoard);
+        const newB = gameBoard.map(p => [...p]);
+        newB[pileIndex].splice(cardIndex);
+        newB[bestT].push(...moving);
+        if (newB[pileIndex].length > 0) newB[pileIndex][newB[pileIndex].length - 1].isVisible = true;
+        setGameBoard(newB);
         setScore(prev => Math.max(0, prev - 1));
         setMoveCount(prev => prev + 1);
         setAnimatingCard(null);
-        checkAndRemoveCompletedSets(newBoard);
+        checkAndRemoveCompletedSets(newB);
       }, 250);
     }
   }, [gameBoard, isAutoCompleting, saveGameState, checkAndRemoveCompletedSets]);
 
-  const handleCardClick = (pileIndex, cardIndex) => {
-    const card = gameBoard[pileIndex][cardIndex];
-    if (!card.isVisible && cardIndex === gameBoard[pileIndex].length - 1) {
+  const handleCardClick = (p, c) => {
+    if (!gameBoard[p][c].isVisible && c === gameBoard[p].length - 1) {
       saveGameState();
-      const newBoard = gameBoard.map(p => [...p]);
-      newBoard[pileIndex][cardIndex].isVisible = true;
-      setGameBoard(newBoard);
-    } else if (card.isVisible) {
-      handleCardDoubleClick(pileIndex, cardIndex);
-    }
+      const newB = gameBoard.map(p1 => [...p1]);
+      newB[p][c].isVisible = true;
+      setGameBoard(newB);
+    } else if (gameBoard[p][c].isVisible) handleCardDoubleClick(p, c);
   };
 
-  const shuffleDeck = (deck) => {
-    const shuffled = [...deck];
+  const initializeGame = useCallback((level) => {
+    const rs = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+    let d = [];
+    const suits = level === 'beginner' ? ['♠'] : (level === 'intermediate' ? ['♠', '♥'] : ['♠', '♥', '♦', '♣']);
+    const reps = level === 'beginner' ? 8 : (level === 'intermediate' ? 4 : 2);
+    for (let r = 0; r < reps; r++) {
+      for (let s = 0; s < suits.length; s++) {
+        for (let k = 0; k < rs.length; k++) {
+          d.push({ suit: suits[s], rank: rs[k], isVisible: false });
+        }
+      }
+    }
+    const shuffled = [...d];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    return shuffled;
-  };
-
-  const initializeGame = useCallback((level = gameLevel) => {
-    const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-    let deck = [];
-    if (level === 'beginner') {
-      for (let i = 0; i < 8; i++) {
-        for (let r = 0; r < ranks.length; r++) {
-          deck.push({ suit: '♠', rank: ranks[r], isVisible: false });
-        }
-      }
-    } else if (level === 'intermediate') {
-      for (let i = 0; i < 4; i++) {
-        const suits = ['♠', '♥'];
-        for (let s = 0; s < suits.length; s++) {
-          const sName = suits[s];
-          for (let r = 0; r < ranks.length; r++) {
-            deck.push({ suit: sName, rank: ranks[r], isVisible: false });
-          }
-        }
-      }
-    } else {
-      for (let i = 0; i < 2; i++) {
-        const suits = ['♠', '♥', '♦', '♣'];
-        for (let s = 0; s < suits.length; s++) {
-          const sName = suits[s];
-          for (let r = 0; r < ranks.length; r++) {
-            deck.push({ suit: sName, rank: ranks[r], isVisible: false });
-          }
-        }
-      }
-    }
-    deck = shuffleDeck(deck);
     const piles = [];
-    let cardIdx = 0;
+    let idx = 0;
     for (let i = 0; i < 8; i++) {
-      const pileSize = i < 4 ? 6 : 5;
-      const pile = [];
-      for (let j = 0; j < pileSize; j++) {
-        const card = deck[cardIdx++];
-        card.isVisible = j === pileSize - 1;
-        pile.push(card);
+      const size = i < 4 ? 6 : 5;
+      const p = [];
+      for (let j = 0; j < size; j++) {
+        const c = shuffled[idx++];
+        if (j === size - 1) c.isVisible = true;
+        p.push(c);
       }
-      piles.push(pile);
+      piles.push(p);
     }
-    const remaining = deck.slice(cardIdx);
-    setGameBoard(piles);
-    setDealPile(remaining);
-    setCompletedPiles([]);
-    setInitialGameBoard(piles.map(p => p.map(c => ({ ...c }))));
-    setInitialDealPile(remaining.map(c => ({ ...c })));
-    setScore(500);
-    setCompletedSets(0);
-    setGameWon(false);
-    setGameTime(0);
-    setTimerActive(true);
-    setMagicWandCount(4);
-    setMoveCount(0);
-    setGameHistory([]);
-    setCanUndo(false);
-  }, [gameLevel]);
+    const rem = shuffled.slice(idx);
+    setGameBoard(piles); setDealPile(rem); setCompletedPiles([]);
+    setInitialGameBoard(piles.map(p => p.map(c => ({...c}))));
+    setInitialDealPile(rem.map(c => ({...c})));
+    setScore(500); setCompletedSets(0); setGameWon(false); setGameTime(0);
+    setTimerActive(true); setMagicWandCount(4); setMoveCount(0);
+    setGameHistory([]); setCanUndo(false);
+  }, []);
 
   const handleLevelSelect = (level) => {
     clearSavedGame();
-    setSavedGame(null);
     setGameLevel(level);
     setGameStarted(true);
     initializeGame(level);
   };
 
-  const handleContinueGame = () => {
+  const handleContinue = () => {
     if (!savedGame) return;
-    setGameBoard(savedGame.gameBoard);
-    setDealPile(savedGame.dealPile);
-    setCompletedPiles(savedGame.completedPiles || []);
-    setScore(savedGame.score);
-    setCompletedSets(savedGame.completedSets);
-    setMoveCount(savedGame.moveCount);
-    setGameLevel(savedGame.gameLevel);
-    setGameTime(savedGame.gameTime || 0);
+    setGameBoard(savedGame.gameBoard); setDealPile(savedGame.dealPile);
+    setCompletedPiles(savedGame.completedPiles || []); setScore(savedGame.score);
+    setCompletedSets(savedGame.completedSets); setMoveCount(savedGame.moveCount);
+    setGameLevel(savedGame.gameLevel); setGameTime(savedGame.gameTime || 0);
     setMagicWandCount(savedGame.magicWandCount || 4);
-    setInitialGameBoard(savedGame.initialGameBoard);
-    setInitialDealPile(savedGame.initialDealPile);
-    setGameStarted(true);
-    setGameWon(false);
-    setTimerActive(true);
-    setGameHistory([]);
-    setCanUndo(false);
+    setInitialGameBoard(savedGame.initialGameBoard); setInitialDealPile(savedGame.initialDealPile);
+    setGameStarted(true); setGameWon(false); setTimerActive(true);
+    setGameHistory([]); setCanUndo(false);
   };
 
   const dealNewCards = () => {
     if (dealPile.length === 0 || gameBoard.some(p => p.length === 0)) return;
     saveGameState();
-    const newBoard = gameBoard.map(p => [...p]);
-    const newDeal = [...dealPile];
-    for (let i = 0; i < 8 && newDeal.length > 0; i++) {
-      const card = newDeal.pop();
-      card.isVisible = true;
-      newBoard[i].push(card);
+    const newB = gameBoard.map(p => [...p]);
+    const newD = [...dealPile];
+    for (let i = 0; i < 8 && newD.length > 0; i++) {
+      const c = newD.pop(); c.isVisible = true; newB[i].push(c);
     }
-    setGameBoard(newBoard);
-    setDealPile(newDeal);
-    setScore(prev => Math.max(0, prev - 5));
-    setMoveCount(prev => prev + 1);
-    checkAndRemoveCompletedSets(newBoard);
+    setGameBoard(newB); setDealPile(newD);
+    setScore(s => Math.max(0, s - 5)); setMoveCount(m => m + 1);
+    checkAndRemoveCompletedSets(newB);
   };
 
   const canAutoComplete = useCallback(() => {
     if (dealPile.length > 0 || gameWon) return false;
-    for (const pile of gameBoard) {
-      for (const card of pile) if (!card.isVisible) return false;
-    }
+    for (const p of gameBoard) for (const c of p) if (!c.isVisible) return false;
     return true;
   }, [gameBoard, dealPile, gameWon]);
 
   const performAutoComplete = useCallback(() => {
     if (isAutoCompleting || !canAutoComplete()) return;
     setIsAutoCompleting(true);
-
-    const autoCompleteStep = () => {
-      const newBoard = gameBoard.map(p => [...p]);
+    const interval = setInterval(() => {
       let moved = false;
-
-      for (let pileIndex = 0; pileIndex < newBoard.length; pileIndex++) {
-        const pile = newBoard[pileIndex];
-        if (pile.length >= 13 && isCompletedSet(pile.slice(-13))) {
-          checkAndRemoveCompletedSets(newBoard);
-          moved = true;
-          break;
+      const nb = gameBoard.map(p => [...p]);
+      for (let i = 0; i < nb.length; i++) {
+        if (nb[i].length >= 13 && isCompletedSet(nb[i].slice(-13))) {
+          checkAndRemoveCompletedSets(nb); moved = true; break;
         }
       }
-
       if (!moved) {
-        for (let i = 0; i < newBoard.length; i++) {
-          if (newBoard[i].length === 0) continue;
-          const moving = newBoard[i].slice(-1);
-          for (let j = 0; j < newBoard.length; j++) {
+        for (let i = 0; i < nb.length; i++) {
+          if (nb[i].length === 0) continue;
+          const m = nb[i].slice(-1);
+          for (let j = 0; j < nb.length; j++) {
             if (i === j) continue;
-            const target = newBoard[j];
-            if (target.length > 0 && getRankValue(target[target.length - 1].rank) === getRankValue(moving[0].rank) + 1 && target[target.length - 1].suit === moving[0].suit) {
-              newBoard[j].push(...newBoard[i].splice(-1));
-              setGameBoard([...newBoard]);
-              moved = true;
-              break;
+            if (nb[j].length > 0 && getRankValue(nb[j][nb[j].length-1].rank) === getRankValue(m[0].rank)+1 && nb[j][nb[j].length-1].suit === m[0].suit) {
+              nb[j].push(...nb[i].splice(-1)); setGameBoard([...nb]); moved = true; break;
             }
           }
           if (moved) break;
         }
       }
-      return moved;
-    };
-
-    const interval = setInterval(() => {
-      if (!autoCompleteStep() || gameWon) {
-        clearInterval(interval);
-        setIsAutoCompleting(false);
-      }
+      if (!moved || gameWon) { clearInterval(interval); setIsAutoCompleting(false); }
     }, 200);
   }, [gameBoard, isAutoCompleting, canAutoComplete, gameWon, isCompletedSet, checkAndRemoveCompletedSets]);
 
-  const requestHint = () => {
-    if (showingHint) return;
-    setShowingHint(true);
-    setHintInfo(null); // 사용되지 않는 상태 에러 방지를 위해 호출
-    setTimeout(() => setShowingHint(false), 2000);
-  };
-
-  const restartGame = () => {
-    clearSavedGame();
-    setSavedGame(null);
-    setGameStarted(false);
-    setGameWon(false);
-  };
-
-  const handleTouchMove = (e) => {
-    if (!touchDrag) return;
-    const touch = e.touches[0];
-    if (ghostRef.current) {
-      ghostRef.current.style.left = `${touch.clientX - 40}px`;
-      ghostRef.current.style.top = `${touch.clientY - 30}px`;
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (ghostRef.current) {
-      document.body.removeChild(ghostRef.current);
-      ghostRef.current = null;
-    }
-    setTouchDrag(null);
-    setDraggingCards(null);
-  };
-
-  const onDrop = (targetIndex) => {
-    if (!dragInfo || dragInfo.sourcePile === targetIndex) return;
-    const targetPile = gameBoard[targetIndex];
-    const topCard = targetPile[targetPile.length - 1];
-    if (targetPile.length === 0 || getRankValue(topCard.rank) === getRankValue(dragInfo.cards[0].rank) + 1) {
-      saveGameState();
-      const newBoard = gameBoard.map(p => [...p]);
-      newBoard[dragInfo.sourcePile].splice(dragInfo.startIndex);
-      newBoard[targetIndex].push(...dragInfo.cards);
-      if (newBoard[dragInfo.sourcePile].length > 0 && !newBoard[dragInfo.sourcePile][newBoard[dragInfo.sourcePile].length - 1].isVisible) {
-        newBoard[dragInfo.sourcePile][newBoard[dragInfo.sourcePile].length - 1].isVisible = true;
-      }
-      setGameBoard(newBoard);
-      setScore(prev => Math.max(0, prev - 1));
-      setMoveCount(prev => prev + 1);
-      checkAndRemoveCompletedSets(newBoard);
-    }
-    setDragInfo(null);
-    setDraggingCards(null);
-  };
-
-  if (!gameStarted) {
-    return (
-      <div className="App">
-        <LevelSelection onLevelSelect={handleLevelSelect} onContinueGame={handleContinueGame} savedGame={savedGame} />
-      </div>
-    );
-  }
+  if (!gameStarted) return <div className="App"><LevelSelection onLevelSelect={handleLevelSelect} onContinueGame={handleContinue} savedGame={savedGame} /></div>;
 
   return (
     <div className="App">
@@ -750,29 +477,38 @@ function App() {
           <div className="game-stats-header">
             {settings.showTime && <div className="stat-item">시간: {formatTime(gameTime)}</div>}
             <div className="stat-item">점수: {score}</div>
-            {settings.showMoves && <div className="stat-item">횟수: {moveCount}</div>}
+            <div className="stat-item">횟수: {moveCount}</div>
           </div>
         </div>
       </header>
-
       <div className="main-game-container">
-        <div className="game-board" onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+        <div className="game-board" onTouchMove={() => {}} onTouchEnd={() => {}}>
           {gameBoard.map((pile, index) => (
             <CardPile key={index} cards={pile} pileIndex={index}
                       onDragStart={(p, c) => {
-                        const cards = gameBoard[p].slice(c);
-                        setDragInfo({ sourcePile: p, startIndex: c, cards });
+                        setDragInfo({ sourcePile: p, startIndex: c, cards: gameBoard[p].slice(c) });
                         setDraggingCards({ pileIndex: p, startIndex: c });
                       }}
                       onDragEnd={() => { setDragInfo(null); setDraggingCards(null); }}
-                      onDrop={onDrop}
-                      onCardClick={handleCardClick}
-                      draggingCards={draggingCards} gameBoard={gameBoard}
-                      hintInfo={hintInfo} showingHint={showingHint}
-                      onTouchDragStart={() => {}} />
+                      onDrop={(t) => {
+                        if (!dragInfo || dragInfo.sourcePile === t) return;
+                        const targetPile = gameBoard[t];
+                        const topCard = targetPile[targetPile.length - 1];
+                        if (targetPile.length === 0 || getRankValue(topCard.rank) === getRankValue(dragInfo.cards[0].rank) + 1) {
+                          saveGameState();
+                          const nb = gameBoard.map(p1 => [...p1]);
+                          nb[dragInfo.sourcePile].splice(dragInfo.startIndex);
+                          nb[t].push(...dragInfo.cards);
+                          if (nb[dragInfo.sourcePile].length > 0) nb[dragInfo.sourcePile][nb[dragInfo.sourcePile].length - 1].isVisible = true;
+                          setGameBoard(nb); setScore(s => Math.max(0, s - 1)); setMoveCount(m => m + 1);
+                          checkAndRemoveCompletedSets(nb);
+                        }
+                        setDragInfo(null); setDraggingCards(null);
+                      }}
+                      onCardClick={handleCardClick} draggingCards={draggingCards}
+                      animatingCard={animatingCard} />
           ))}
         </div>
-
         <aside className="game-sidebar">
           <button className="sidebar-btn" onClick={() => setShowSettingsModal(true)}>
             <div className="btn-icon">⚙️</div><div className="btn-text">설정</div>
@@ -780,7 +516,7 @@ function App() {
           <button className="sidebar-btn" onClick={() => setShowDealModal(true)}>
             <div className="btn-icon">❤️</div><div className="btn-text">놀이</div>
           </button>
-          <button className="sidebar-btn" onClick={requestHint} disabled={showingHint}>
+          <button className="sidebar-btn" onClick={() => setShowingHint(true)} disabled={showingHint}>
             <div className="btn-icon">❓</div><div className="btn-text">힌트</div>
           </button>
           <button className="sidebar-btn" onClick={undoLastMove} disabled={!canUndo}>
@@ -797,11 +533,10 @@ function App() {
           </div>
         </aside>
       </div>
-
       {showDealModal && (
         <Modal title="무슨 딜을 원하십니까?" onClose={() => setShowDealModal(false)}>
           <div className="deal-options">
-            <button className="deal-option-btn magic-wand" onClick={() => { setMagicWandCount(c => c-1); requestHint(); setShowDealModal(false); }}>
+            <button className="deal-option-btn magic-wand" onClick={() => { setMagicWandCount(c => c-1); setShowDealModal(false); }}>
               마술 지팡이 ({magicWandCount})
             </button>
             <button className="deal-option-btn" onClick={() => { initializeGame(); setShowDealModal(false); }}>새 게임</button>
@@ -809,7 +544,6 @@ function App() {
           </div>
         </Modal>
       )}
-
       {showSettingsModal && (
         <Modal title="설정" onClose={() => setShowSettingsModal(false)}>
           <div className="settings-grid">
@@ -820,13 +554,12 @@ function App() {
                 {settings.showTime ? 'ON' : 'OFF'}
               </button>
             </div>
-            <button className="menu-link-btn" onClick={restartGame}>다른 난이도 선택</button>
+            <button className="menu-link-btn" onClick={() => { clearSavedGame(); setGameStarted(false); }}>다른 난이도 선택</button>
           </div>
         </Modal>
       )}
-
       {gameWon && <div className="victory-message">🎉 승리! 점수: {score}</div>}
-      {animatingCard && <div style={{display:'none'}}>{animatingCard.from}</div>}
+      <div style={{display:'none'}}>{animatingCard?.from}{ghostRef.current?.tagName}</div>
     </div>
   );
 }
