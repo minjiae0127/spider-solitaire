@@ -210,6 +210,24 @@
   color: #000;
 }
 
+/* 옮길 수 없는 카드 스타일 (더 반투명하게) */
+.card.non-movable {
+  opacity: 0.3 !important;
+  filter: grayscale(100%) brightness(0.8);
+  cursor: not-allowed !important;
+}
+
+.card.non-movable.visible {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+  border: 1px dashed rgba(255, 255, 255, 0.2) !important;
+}
+
+.card.non-movable::before,
+.card.non-movable::after {
+  opacity: 0.2;
+}
+
 .card.draggable:hover {
   transform: translateX(-50%) translateY(-5px) !important;
   box-shadow: 0 8px 15px rgba(0,0,0,0.5);
