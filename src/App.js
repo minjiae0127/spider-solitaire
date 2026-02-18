@@ -407,6 +407,17 @@ function App() {
     setCanUndo(false);
   };
 
+  const isCompletedSet = (cards) => {
+    if (cards.length !== 13) return false;
+    const firstSuit = cards[0].suit;
+    for (let i = 0; i < 13; i++) {
+      if (!cards[i].isVisible || cards[i].suit !== firstSuit || getRankValue(cards[i].rank) !== 13 - i) {
+        return false;
+      }
+    }
+    return true;
+  };
+
   const checkAndRemoveCompletedSets = (board) => {
     const newBoard = [...board];
     let setsRemoved = 0;
@@ -415,15 +426,7 @@ function App() {
       const pile = newBoard[pileIndex];
       if (pile.length >= 13) {
         const topCards = pile.slice(-13);
-        const firstSuit = topCards[0].suit;
-        let isComplete = true;
-        for (let i = 0; i < 13; i++) {
-          if (!topCards[i].isVisible || topCards[i].suit !== firstSuit || getRankValue(topCards[i].rank) !== 13 - i) {
-            isComplete = false;
-            break;
-          }
-        }
-        if (isComplete) {
+        if (isCompletedSet(topCards)) {
           const set = pile.splice(-13);
           removedSets.push(set[0]);
           setsRemoved++;
