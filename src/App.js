@@ -307,7 +307,7 @@ function App() {
   const [draggingCards, setDraggingCards] = useState(null);
   const [gameHistory, setGameHistory] = useState([]);
   const [canUndo, setCanUndo] = useState(false);
-  const [hintInfo, setHintInfo] = useState(null);
+  const [hintInfo] = useState(null);
   const [showingHint, setShowingHint] = useState(false);
   const [moveCount, setMoveCount] = useState(0);
   const [touchDrag, setTouchDrag] = useState(null);
@@ -365,6 +365,44 @@ function App() {
     setSavedGame(gameState);
   }, [gameBoard, dealPile, completedPiles, score, completedSets, moveCount, gameStarted, gameWon, gameLevel, isAutoCompleting, initialGameBoard, initialDealPile, gameTime, magicWandCount]);
 
+  const isCompletedSet = useCallback((cards) => {
+    if (cards.length !== 13) return false;
+    const firstSuit = cards[0].suit;
+    for (let i = 0; i < 13; i++) {
+      if (!cards[i].isVisible || cards[i].suit !== firstSuit || getRankValue(cards[i].rank) !== 13 - i) {
+        return false;
+      }
+    }
+    return true;
+  }, []);
+
+  const checkAndRemoveCompletedSets = useCallback((board) => {
+    const newBoard = [...board];
+    let setsRemoved = 0;
+    const removedSets = [];
+    for (let pileIndex = 0; pileIndex < newBoard.length; pileIndex++) {
+      const pile = newBoard[pileIndex];
+      if (pile.length >= 13) {
+        const topCards = pile.slice(-13);
+        if (isCompletedSet(topCards)) {
+          const set = pile.splice(-13);
+          removedSets.push(set[0]);
+          setsRemoved++;
+          if (pile.length > 0 && !pile[pile.length - 1].isVisible) {
+            pile[pile.length - 1].isVisible = true;
+          }
+        }
+      }
+    }
+    if (setsRemoved > 0) {
+      setGameBoard(newBoard);
+      setCompletedPiles(prev => [...prev, ...removedSets]);
+      setCompletedSets(prev => prev + setsRemoved);
+      setScore(prev => prev + (setsRemoved * 100));
+      if (completedSets + setsRemoved >= 8) setGameWon(true);
+    }
+  }, [completedSets, isCompletedSet]);
+
   const saveGameState = useCallback(() => {
     const currentState = {
       gameBoard: gameBoard.map(pile => pile.map(card => ({ ...card }))),
@@ -405,44 +443,6 @@ function App() {
   const clearHistory = () => {
     setGameHistory([]);
     setCanUndo(false);
-  };
-
-  const isCompletedSet = (cards) => {
-    if (cards.length !== 13) return false;
-    const firstSuit = cards[0].suit;
-    for (let i = 0; i < 13; i++) {
-      if (!cards[i].isVisible || cards[i].suit !== firstSuit || getRankValue(cards[i].rank) !== 13 - i) {
-        return false;
-      }
-    }
-    return true;
-  };
-
-  const checkAndRemoveCompletedSets = (board) => {
-    const newBoard = [...board];
-    let setsRemoved = 0;
-    const removedSets = [];
-    for (let pileIndex = 0; pileIndex < newBoard.length; pileIndex++) {
-      const pile = newBoard[pileIndex];
-      if (pile.length >= 13) {
-        const topCards = pile.slice(-13);
-        if (isCompletedSet(topCards)) {
-          const set = pile.splice(-13);
-          removedSets.push(set[0]);
-          setsRemoved++;
-          if (pile.length > 0 && !pile[pile.length - 1].isVisible) {
-            pile[pile.length - 1].isVisible = true;
-          }
-        }
-      }
-    }
-    if (setsRemoved > 0) {
-      setGameBoard(newBoard);
-      setCompletedPiles(prev => [...prev, ...removedSets]);
-      setCompletedSets(prev => prev + setsRemoved);
-      setScore(prev => prev + (setsRemoved * 100));
-      if (completedSets + setsRemoved >= 8) setGameWon(true);
-    }
   };
 
   const handleCardDoubleClick = useCallback((pileIndex, cardIndex) => {
@@ -487,7 +487,7 @@ function App() {
         checkAndRemoveCompletedSets(newBoard);
       }, 250);
     }
-  }, [gameBoard, isAutoCompleting, saveGameState]);
+  }, [gameBoard, isAutoCompleting, saveGameState, checkAndRemoveCompletedSets]);
 
   const handleCardClick = (pileIndex, cardIndex) => {
     const card = gameBoard[pileIndex][cardIndex];
@@ -514,26 +514,44 @@ function App() {
     const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
     let deck = [];
     if (level === 'beginner') {
-      for (let i = 0; i < 8; i++) ranks.forEach(r => deck.push({ suit: '♠', rank: r, isVisible: false }));
+      for (let i = 0; i < 8; i++) {
+        for (let r = 0; r < ranks.length; r++) {
+          deck.push({ suit: '♠', rank: ranks[r], isVisible: false });
+        }
+      }
     } else if (level === 'intermediate') {
-      for (let i = 0; i < 4; i++) ['♠', '♥'].forEach(s => ranks.forEach(r => deck.push({ suit: s, rank: r, isVisible: false })));
+      for (let i = 0; i < 4; i++) {
+        const suits = ['♠', '♥'];
+        for (let s = 0; s < suits.length; s++) {
+          for (let r = 0; r < ranks.length; r++) {
+            deck.push({ suit: suits[s], rank: ranks[r], isVisible: false });
+          }
+        }
+      }
     } else {
-      for (let i = 0; i < 2; i++) ['♠', '♥', '♦', '♣'].forEach(s => ranks.forEach(r => deck.push({ suit: s, rank: r, isVisible: false })));
+      for (let i = 0; i < 2; i++) {
+        const suits = ['♠', '♥', '♦', '♣'];
+        for (let s = 0; s < suits.length; s++) {
+          for (let r = 0; r < ranks.length; r++) {
+            deck.push({ suit: suits[s], rank: ranks[r], isVisible: false });
+          }
+        }
+      }
     }
     deck = shuffleDeck(deck);
     const piles = [];
-    let cardIndex = 0;
+    let cardIdx = 0;
     for (let i = 0; i < 8; i++) {
       const pileSize = i < 4 ? 6 : 5;
       const pile = [];
       for (let j = 0; j < pileSize; j++) {
-        const card = deck[cardIndex++];
+        const card = deck[cardIdx++];
         card.isVisible = j === pileSize - 1;
         pile.push(card);
       }
       piles.push(pile);
     }
-    const remaining = deck.slice(cardIndex);
+    const remaining = deck.slice(cardIdx);
     setGameBoard(piles);
     setDealPile(remaining);
     setCompletedPiles([]);
@@ -546,7 +564,8 @@ function App() {
     setTimerActive(true);
     setMagicWandCount(4);
     setMoveCount(0);
-    clearHistory();
+    setGameHistory([]);
+    setCanUndo(false);
   }, [gameLevel]);
 
   const handleLevelSelect = (level) => {
@@ -573,7 +592,8 @@ function App() {
     setGameStarted(true);
     setGameWon(false);
     setTimerActive(true);
-    clearHistory();
+    setGameHistory([]);
+    setCanUndo(false);
   };
 
   const dealNewCards = () => {
@@ -644,7 +664,7 @@ function App() {
         setIsAutoCompleting(false);
       }
     }, 200);
-  }, [gameBoard, isAutoCompleting, canAutoComplete, gameWon, completedSets]);
+  }, [gameBoard, isAutoCompleting, canAutoComplete, gameWon, isCompletedSet, checkAndRemoveCompletedSets]);
 
   const requestHint = () => {
     if (showingHint) return;
@@ -744,7 +764,7 @@ function App() {
                       onDrop={onDrop}
                       onCardClick={handleCardClick}
                       draggingCards={draggingCards} gameBoard={gameBoard}
-                      hintInfo={hintInfo} showingHint={showingHint}
+                      hintInfo={null} showingHint={showingHint}
                       onTouchDragStart={() => {}} />
           ))}
         </div>
