@@ -17,28 +17,47 @@
 
 /* 상단 정보 바 */
 .game-header {
-  padding: 10px 20px;
-  background: rgba(0, 0, 0, 0.3);
+  padding: 15px 20px;
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .header-top {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
 }
 
-.game-title-badge {
-  background: #1a4d37;
-  padding: 4px 15px;
+.foundation-piles {
+  display: flex;
+  gap: 8px;
+}
+
+.foundation-slot {
+  width: 60px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
-  font-size: 0.9em;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.foundation-slot .card {
+  width: 100%;
+  height: 100%;
+  font-size: 16px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
 }
 
 .game-stats-header {
   display: flex;
-  gap: 40px;
+  gap: 30px;
   font-size: 1.1em;
+  font-weight: bold;
+  color: #fff;
+  margin-top: 10px;
 }
 
 .stat-item {
@@ -165,9 +184,9 @@
 }
 
 .card.visible {
-  background: linear-gradient(135deg, #ffffff, #f8f8f8);
-  color: #333;
-  border: 1px solid #ccc;
+  background: linear-gradient(135deg, #fdfbf7, #e8e4d9);
+  color: #1a1a1a;
+  border: 1px solid #c0b090;
 }
 
 /* 카드 상단 좌측에 작은 숫자와 무늬 표시 */

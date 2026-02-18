@@ -431,6 +431,7 @@ function getRankValue(rank) {
 function App() {
   const [gameBoard, setGameBoard] = useState([]);
   const [dealPile, setDealPile] = useState([]);
+  const [completedPiles, setCompletedPiles] = useState([]); // 완성된 세트들을 저장
   const [score, setScore] = useState(500);
   const [dragInfo, setDragInfo] = useState(null);
   const [completedSets, setCompletedSets] = useState(0);
@@ -519,6 +520,7 @@ function App() {
     const gameState = {
       gameBoard: gameBoard.map(pile => pile.map(card => ({ ...card }))),
       dealPile: dealPile.map(card => ({ ...card })),
+      completedPiles: completedPiles.map(p => ({ ...p })),
       score,
       completedSets,
       moveCount,
@@ -531,13 +533,14 @@ function App() {
 
     saveGameToStorage(gameState);
     setSavedGame(gameState);
-  }, [gameBoard, dealPile, score, completedSets, moveCount, gameStarted, gameWon, gameLevel, isAutoCompleting, initialGameBoard, initialDealPile, gameTime, magicWandCount]);
+  }, [gameBoard, dealPile, completedPiles, score, completedSets, moveCount, gameStarted, gameWon, gameLevel, isAutoCompleting, initialGameBoard, initialDealPile, gameTime, magicWandCount]);
 
   // 게임 상태를 히스토리에 저장하는 함수
   const saveGameState = () => {
     const currentState = {
       gameBoard: gameBoard.map(pile => pile.map(card => ({ ...card }))),
       dealPile: dealPile.map(card => ({ ...card })),
+      completedPiles: completedPiles.map(p => ({ ...p })),
       score: score,
       completedSets: completedSets,
       gameWon: gameWon
@@ -563,6 +566,7 @@ function App() {
     // 이전 상태로 복원
     setGameBoard(lastState.gameBoard.map(pile => pile.map(card => ({ ...card }))));
     setDealPile(lastState.dealPile.map(card => ({ ...card })));
+    setCompletedPiles(lastState.completedPiles.map(p => ({ ...p })));
     setScore(lastState.score);
     setCompletedSets(lastState.completedSets);
     setGameWon(lastState.gameWon);
@@ -906,6 +910,7 @@ function App() {
     // 저장된 상태 복원
     setGameBoard(saved.gameBoard.map(pile => pile.map(card => ({ ...card }))));
     setDealPile(saved.dealPile.map(card => ({ ...card })));
+    setCompletedPiles(saved.completedPiles ? saved.completedPiles.map(p => ({ ...p })) : []);
     setScore(saved.score);
     setCompletedSets(saved.completedSets);
     setMoveCount(saved.moveCount || 0);
@@ -963,6 +968,7 @@ function App() {
 
     setGameBoard(piles);
     setDealPile(remainingCards);
+    setCompletedPiles([]); // 완성된 세트 초기화
     setInitialGameBoard(deepCopyBoard); // 초기 게임 보드 저장
     setInitialDealPile(deepCopyDeal); // 초기 딜 더미 저장
     setScore(500);
@@ -1207,6 +1213,7 @@ function App() {
   const checkAndRemoveCompletedSets = (board) => {
     const newBoard = [...board];
     let setsRemoved = 0;
+    const removedSets = [];
 
     for (let pileIndex = 0; pileIndex < newBoard.length; pileIndex++) {
       const pile = newBoard[pileIndex];
@@ -1216,8 +1223,9 @@ function App() {
         const topCards = pile.slice(-13);
 
         if (isCompletedSet(topCards)) {
-          // 완성된 세트 제거
-          pile.splice(-13);
+          // 완성된 세트 제거 및 보관
+          const set = pile.splice(-13);
+          removedSets.push(set[0]); // K 카드만 보관 (표시용)
           setsRemoved++;
 
           // 다음 카드를 보이게 만들기
@@ -1230,6 +1238,7 @@ function App() {
 
     if (setsRemoved > 0) {
       setGameBoard(newBoard);
+      setCompletedPiles(prev => [...prev, ...removedSets]);
       setCompletedSets(prev => prev + setsRemoved);
       setScore(prevScore => prevScore + (setsRemoved * 100));
 
@@ -1634,7 +1643,22 @@ function App() {
     <div className="App">
       <header className="game-header">
         <div className="header-top">
-          <div className="game-title-badge">스파이더</div>
+          <div className="foundation-piles">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="foundation-slot">
+                {completedPiles[i] ? (
+                  <div className={`card visible ${completedPiles[i].suit === '♥' || completedPiles[i].suit === '♦' ? 'red-suit' : 'black-suit'}`} 
+                       data-rank={completedPiles[i].rank} 
+                       data-suit={completedPiles[i].suit}
+                       style={{ position: 'relative', left: 'auto', transform: 'none' }}>
+                    {completedPiles[i].rank}{completedPiles[i].suit}
+                  </div>
+                ) : (
+                  <div className="empty-foundation"></div>
+                )}
+              </div>
+            ))}
+          </div>
           <div className="game-stats-header">
             {settings.showTime && <div className="stat-item">시간: {formatTime(gameTime)}</div>}
             <div className="stat-item">점수: {score}</div>
