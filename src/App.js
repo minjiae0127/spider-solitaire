@@ -601,15 +601,47 @@ function App() {
   const performAutoComplete = useCallback(() => {
     if (isAutoCompleting || !canAutoComplete()) return;
     setIsAutoCompleting(true);
-    const step = () => {
-      let moved = false;
+
+    const autoCompleteStep = () => {
       const newBoard = gameBoard.map(p => [...p]);
-      // (Step logic omitted for brevity in overwrite, re-implementing core loop)
-      // For CI safety, ensuring this function is defined and used.
+      let moved = false;
+
+      for (let pileIndex = 0; pileIndex < newBoard.length; pileIndex++) {
+        const pile = newBoard[pileIndex];
+        if (pile.length >= 13 && isCompletedSet(pile.slice(-13))) {
+          checkAndRemoveCompletedSets(newBoard);
+          moved = true;
+          break;
+        }
+      }
+
+      if (!moved) {
+        for (let i = 0; i < newBoard.length; i++) {
+          if (newBoard[i].length === 0) continue;
+          const moving = newBoard[i].slice(-1);
+          for (let j = 0; j < newBoard.length; j++) {
+            if (i === j) continue;
+            const target = newBoard[j];
+            if (target.length > 0 && getRankValue(target[target.length - 1].rank) === getRankValue(moving[0].rank) + 1 && target[target.length - 1].suit === moving[0].suit) {
+              newBoard[j].push(...newBoard[i].splice(-1));
+              setGameBoard([...newBoard]);
+              moved = true;
+              break;
+            }
+          }
+          if (moved) break;
+        }
+      }
+      return moved;
     };
-    step(); 
-    setIsAutoCompleting(false);
-  }, [gameBoard, isAutoCompleting, canAutoComplete]);
+
+    const interval = setInterval(() => {
+      if (!autoCompleteStep() || gameWon) {
+        clearInterval(interval);
+        setIsAutoCompleting(false);
+      }
+    }, 200);
+  }, [gameBoard, isAutoCompleting, canAutoComplete, gameWon, completedSets]);
 
   const requestHint = () => {
     if (showingHint) return;
