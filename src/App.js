@@ -248,12 +248,12 @@ function App() {
   const ghostRef = useRef(null);
 
   // 터치 드래그 핸들러
-  const handleTouchStart = (e, pileIndex, cardIndex, pos) => {
-    // e.preventDefault()는 여기서 호출하면 클릭이 막힐 수 있음
-    setDragInfo({ sourcePile: pileIndex, startIndex: cardIndex, cards: gameBoard[pileIndex].slice(cardIndex) });
-    setDraggingCards({ pileIndex: pileIndex, startIndex: cardIndex });
-    setDragPosition(pos);
-  };
+  // const handleTouchStart = (e, pileIndex, cardIndex, pos) => {
+  //   // e.preventDefault()는 여기서 호출하면 클릭이 막힐 수 있음
+  //   setDragInfo({ sourcePile: pileIndex, startIndex: cardIndex, cards: gameBoard[pileIndex].slice(cardIndex) });
+  //   setDraggingCards({ pileIndex: pileIndex, startIndex: cardIndex });
+  //   setDragPosition(pos);
+  // };
 
   const handleTouchMove = (e) => {
     if (dragPosition && draggingCards) {
@@ -547,7 +547,6 @@ function App() {
                   <div className={`card visible ${completedPiles[i].suit === '♥' || completedPiles[i].suit === '♦' ? 'red-suit' : 'black-suit'}`}
                        data-rank={completedPiles[i].rank} data-suit={completedPiles[i].suit}
                        style={{ position: 'relative', left: 'auto', transform: 'none' }}>
-                    {/* 모바일에서는 텍스트 크기 조절 필요할 수 있음 */}
                     {completedPiles[i].rank}{completedPiles[i].suit}
                   </div>
                 )}
@@ -564,44 +563,8 @@ function App() {
       <div className="main-game-container">
         <div 
           className="game-board" 
-          onTouchMove={(e) => {
-            // 보드 전체에서 터치 이동 감지
-            if (draggingCards) {
-               // 스크롤 방지 (필요 시)
-               // e.preventDefault(); 
-               const touch = e.touches[0];
-               setDragPosition({ x: touch.clientX, y: touch.clientY });
-            }
-          }}
-          onTouchEnd={(e) => {
-             if (draggingCards && dragInfo) {
-                const touch = e.changedTouches[0];
-                const element = document.elementFromPoint(touch.clientX, touch.clientY);
-                // 카드가 겹쳐있을 수 있으므로 가장 가까운 pile 찾기
-                const pileElement = element?.closest('.card-pile');
-                
-                if (pileElement) {
-                   const t = parseInt(pileElement.getAttribute('data-pile-index'), 10);
-                   if (!isNaN(t) && t !== dragInfo.sourcePile) {
-                      // Drop Logic (onDrop 코드 복제 및 수정)
-                      const targetPile = gameBoard[t];
-                      const topCard = targetPile[targetPile.length - 1];
-                      // 규칙: 빈 칸이거나, 랭크가 1 높고 같은 무늬여야 함 (아니면 스파이더 솔리테어 규칙에 따름)
-                      // 원래 코드: getRankValue(topCard.rank) === getRankValue(dragInfo.cards[0].rank) + 1
-                      if (targetPile.length === 0 || getRankValue(topCard.rank) === getRankValue(dragInfo.cards[0].rank) + 1) {
-                         saveGameState();
-                         const nb = gameBoard.map(p1 => [...p1]);
-                         nb[dragInfo.sourcePile].splice(dragInfo.startIndex);
-                         nb[t].push(...dragInfo.cards);
-                         if (nb[dragInfo.sourcePile].length > 0) nb[dragInfo.sourcePile][nb[dragInfo.sourcePile].length - 1].isVisible = true;
-                         setGameBoard(nb); setScore(s => Math.max(0, s - 1)); setMoveCount(m => m + 1);
-                         checkAndRemoveCompletedSets(nb);
-                      }
-                   }
-                }
-                setDragInfo(null); setDraggingCards(null); setDragPosition(null);
-             }
-          }}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
           {gameBoard.map((pile, index) => (
             <CardPile key={index} cards={pile} pileIndex={index}
@@ -628,12 +591,12 @@ function App() {
                       onCardClick={handleCardClick} draggingCards={draggingCards}
                       animatingCard={animatingCard} 
                       onTouchStart={(e, p, c, pos) => {
-                         // Touch Start Logic
-                         setDragInfo({ sourcePile: p, startIndex: c, cards: gameBoard[p].slice(c) });
-                         setDraggingCards({ pileIndex: p, startIndex: c });
-                         setDragPosition(pos);
-                      }}
-                      dragPosition={dragPosition}
+                        // Touch Start Logic
+                        setDragInfo({ sourcePile: p, startIndex: c, cards: gameBoard[p].slice(c) });
+                        setDraggingCards({ pileIndex: p, startIndex: c });
+                        setDragPosition(pos);
+                     }}
+                     dragPosition={dragPosition}
             />
           ))}
         </div>
